@@ -1,72 +1,63 @@
-# ML/AI Capstone Project: Black Box Optimization
+# Black-Box Optimisation (BBO) Capstone Project
 
-[![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## 1. Project overview
 
----
+This repository contains my work for the **Black-Box Optimisation (BBO) capstone project**, where the objective is to optimise a set of unknown functions by iteratively querying them and observing their outputs. The internal form of each function is hidden, and only limited feedback is provided after each submission round.
 
-## Table of Contents
-- [Project Overview](#project-overview)
-- [Problem Statement](#problem-statement)
-- [Objectives](#objectives)
-- [Data Description](#data-description)
-- [Methodology](#methodology)
-- [Tools & Technologies](#tools--technologies)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Results](#results)
-- [Future Work](#future-work)
-- [License](#license)
+The overall goal of the BBO capstone project is to **efficiently maximise the output of each unknown function under a strict query budget**. This setting closely reflects real-world machine learning problems such as hyperparameter tuning, simulation-based optimisation, and experimental design, where function evaluations are expensive and the response surface is unknown.
+
+This project supports my current and future career by developing practical skills in **Bayesian optimisation, uncertainty-aware modelling, and decision-making under incomplete information**—all of which are directly applicable to applied ML, data science, and solution architecture roles.
 
 ---
 
-## Project Overview
-This project focuses on **Black Box Optimization**, a machine learning and AI approach for optimizing functions where the internal structure is unknown or too complex to model analytically. The goal is to **find optimal solutions efficiently** using techniques like **Bayesian Optimization, Evolutionary Algorithms, or Reinforcement Learning**.
+## 2. Inputs and outputs
+
+Each black-box function receives **one query input per week**, with dimensionality varying across functions.
+
+### Inputs
+- **Format:** `x1-x2-x3-...-xn`
+- **Domain:** each `xi ∈ [0, 1]`
+- **Precision:** six decimal places per value
+- **Dimensionality:** varies by function (2D to 8D)
+- **Constraint:** one query per function per round
+
+**Examples**
+- 2D input:  
+  `0.372451-0.684219`
+- 5D input:  
+  `0.238415-0.564738-0.792164-0.413826-0.689541`
+
+### Outputs
+- A single real-valued scalar returned by the black-box function
+- Represents a **performance signal** to be maximised
+- Scale, smoothness, and noise level are unknown a priori
 
 ---
 
-## Problem Statement
-Many real-world optimization problems (e.g., hyperparameter tuning, industrial process optimization, or automated design) involve **black box functions**:
-- Input-output relationships are known, but the internal process is unknown.
-- Evaluations can be expensive or time-consuming.
+## 3. Challenge objectives
 
-The project aims to **design and implement algorithms** that can optimize such functions effectively.
+The objective of the BBO capstone project is to **maximise the output of each unknown function** using as few queries as possible.
 
----
+Key constraints include:
+- A **limited query budget** (one query per function per week)
+- **Delayed feedback** (outputs are only available after submission)
+- **Unknown function structure**, dimensionality, and noise characteristics
+- High-dimensional search spaces with sparse observations
 
-## Objectives
-- Implement black box optimization algorithms.
-- Evaluate performance on benchmark functions.
-- Compare convergence rates, efficiency, and accuracy.
-- Provide insights into practical applications.
+The challenge is therefore not only to find high-performing points, but to do so **efficiently**, balancing learning about the function with exploiting known promising regions.
 
 ---
 
-## Data Description
-- Input parameter ranges and corresponding outputs from simulated or real-world experiments.
-- Benchmark functions such as **Rastrigin, Ackley, Sphere** can be used for testing.
-- The project assumes **black box evaluation functions** (no explicit analytical model required).
+## 4. Technical approach
 
----
+This section is a living record of how my approach has evolved across the first three query rounds.
 
-## Methodology
-1. **Problem Formulation**: Define optimization goals and constraints.
-2. **Algorithm Selection**: Choose techniques like:
-   - Bayesian Optimization
-   - Genetic/Evolutionary Algorithms
-   - Reinforcement Learning-based Optimization
-3. **Implementation**: Write modular Python code.
-4. **Evaluation**: Measure convergence speed, robustness, and solution quality.
-5. **Visualization**: Plot performance metrics, optimization trajectories, and convergence curves.
+### Modelling
+Each function is modelled using a **Gaussian Process (GP)** surrogate. GPs provide both a predictive mean (μ) and predictive uncertainty (σ), which are essential for principled exploration. Kernel choice (RBF, Matérn ν=1.5, Matérn ν=2.5), length-scales, and noise levels are selected automatically by maximising the **log marginal likelihood**, allowing the model to adapt to observed data.
 
----
+### Query selection
+New queries are generated using the **Expected Improvement (EI)** acquisition function. The balance between exploration and exploitation is controlled explicitly through the parameter **ξ (xi)**:
+- **Exploitation-focused:** `ξ = 0.001`
+- **Exploration-focused:** `ξ = 0.05`
 
-## Tools & Technologies
-- **Languages**: Python 3.x
-- **Libraries**:
-  - `numpy`, `pandas`
-  - `scikit-learn`
-  - `matplotlib`, `seaborn`
-  - `GPyOpt`, `bayes_opt`
-  - `DEAP`
-- **Environment**: Jupyter Notebook / VS Code
+In some experiments, an Upper Confidence Bound (UCB) formulation is also considered, where **β (beta)** controls the weight of uncertainty:
