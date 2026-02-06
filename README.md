@@ -1,63 +1,85 @@
+[readme.md](https://github.com/user-attachments/files/25130306/readme.md)
 # Black-Box Optimisation (BBO) Capstone Project
 
-## 1. Project overview
+## Section 1: Project Overview
 
-This repository contains my work for the **Black-Box Optimisation (BBO) capstone project**, where the objective is to optimise a set of unknown functions by iteratively querying them and observing their outputs. The internal form of each function is hidden, and only limited feedback is provided after each submission round.
+This repository documents my work on the Black-Box Optimisation (BBO) capstone project. The challenge involves optimising several unknown functions under strict query constraints. Each function is treated as a black box: its analytical form, gradients, and noise characteristics are unknown, and information is revealed only through sequential query feedback.
 
-The overall goal of the BBO capstone project is to **efficiently maximise the output of each unknown function under a strict query budget**. This setting closely reflects real-world machine learning problems such as hyperparameter tuning, simulation-based optimisation, and experimental design, where function evaluations are expensive and the response surface is unknown.
+The overall goal of the BBO capstone project is to efficiently **maximise the output of multiple unknown functions** while operating under limited evaluation budgets. This closely reflects real-world machine learning scenarios such as hyperparameter optimisation, simulation-based optimisation, and experimental design, where evaluations are costly and uncertainty must be managed explicitly.
 
-This project supports my current and future career by developing practical skills in **Bayesian optimisation, uncertainty-aware modelling, and decision-making under incomplete information**—all of which are directly applicable to applied ML, data science, and solution architecture roles.
+This project supports my current and future career by developing practical skills in Bayesian optimisation, uncertainty-aware modelling, and iterative decision-making. These skills are directly transferable to data science, ML engineering, and research roles where optimisation must be performed with incomplete knowledge.
 
 ---
 
-## 2. Inputs and outputs
+## Section 2: Inputs and Outputs
 
-Each black-box function receives **one query input per week**, with dimensionality varying across functions.
+Each iteration consists of submitting a single query point per function and receiving a scalar response.
 
 ### Inputs
-- **Format:** `x1-x2-x3-...-xn`
-- **Domain:** each `xi ∈ [0, 1]`
-- **Precision:** six decimal places per value
-- **Dimensionality:** varies by function (2D to 8D)
-- **Constraint:** one query per function per round
+- **Query format:** `x1-x2-x3-...-xn`
+- Each `xi`:
+  - Lies in the range `[0, 1]`
+  - Is specified to **six decimal places**
+- **Dimensionality:** varies by function (from 2D to 8D)
+- **Constraint:** one query per function per iteration
 
-**Examples**
-- 2D input:  
-  `0.372451-0.684219`
-- 5D input:  
-  `0.238415-0.564738-0.792164-0.413826-0.689541`
+**Example input (2D):**
+```
+0.372451-0.684219
+```
 
 ### Outputs
-- A single real-valued scalar returned by the black-box function
-- Represents a **performance signal** to be maximised
-- Scale, smoothness, and noise level are unknown a priori
+- A single real-valued scalar representing the function response
+- Output scale, smoothness, and noise level are unknown and function-specific
+- Outputs are used only to inform subsequent modelling and query decisions
 
 ---
 
-## 3. Challenge objectives
+## Section 3: Challenge Objectives
 
-The objective of the BBO capstone project is to **maximise the output of each unknown function** using as few queries as possible.
+The primary objective of the BBO capstone project is to **maximise the output of each unknown function** over successive iterations.
 
 Key constraints include:
-- A **limited query budget** (one query per function per week)
-- **Delayed feedback** (outputs are only available after submission)
-- **Unknown function structure**, dimensionality, and noise characteristics
-- High-dimensional search spaces with sparse observations
+- A limited total number of allowable queries
+- Sequential feedback (results are only available after submission)
+- Unknown function structure and noise characteristics
+- Increasing dimensionality, which increases sparsity and uncertainty
 
-The challenge is therefore not only to find high-performing points, but to do so **efficiently**, balancing learning about the function with exploiting known promising regions.
+The challenge therefore requires careful trade-offs between learning about the function landscape and exploiting currently promising regions.
 
 ---
 
-## 4. Technical approach
+## Section 4: Technical Approach
 
-This section is a living record of how my approach has evolved across the first three query rounds.
+### Strategy Evolution (Weeks 1–3)
 
-### Modelling
-Each function is modelled using a **Gaussian Process (GP)** surrogate. GPs provide both a predictive mean (μ) and predictive uncertainty (σ), which are essential for principled exploration. Kernel choice (RBF, Matérn ν=1.5, Matérn ν=2.5), length-scales, and noise levels are selected automatically by maximising the **log marginal likelihood**, allowing the model to adapt to observed data.
+- **Week 1 – Structured Exploration:**
+  Initial queries prioritised broad exploration and diversity. With no prior feedback available, points were chosen to reduce global uncertainty and avoid boundary bias, particularly for higher-dimensional functions.
 
-### Query selection
-New queries are generated using the **Expected Improvement (EI)** acquisition function. The balance between exploration and exploitation is controlled explicitly through the parameter **ξ (xi)**:
-- **Exploitation-focused:** `ξ = 0.001`
-- **Exploration-focused:** `ξ = 0.05`
+- **Week 2 – Adaptive Exploration vs Exploitation:**
+  Observed outputs from Week 1 enabled relative performance comparisons. Most functions remained exploratory due to high uncertainty, while a small number were refined locally based on promising results.
 
-In some experiments, an Upper Confidence Bound (UCB) formulation is also considered, where **β (beta)** controls the weight of uncertainty:
+- **Week 3 – Model-Driven Bayesian Optimisation:**
+  A separate Gaussian Process (GP) model was fitted for each function. Kernel choice and hyperparameters were optimised automatically by maximising the log marginal likelihood. Query points were selected using acquisition functions informed by the posterior mean μ(x) and predictive uncertainty σ(x).
+
+### Methods Used
+
+- Gaussian Process regression with RBF and Matérn kernels
+- Automatic kernel and hyperparameter selection via marginal likelihood
+- Expected Improvement (EI) as the primary acquisition function
+- Explicit exploration–exploitation control using:
+  - **ξ (xi)** for EI (e.g. ξ = 0.001 for exploitation, ξ = 0.05 for exploration)
+  - **β (beta)** for UCB-style acquisition when applicable
+
+### Exploration vs Exploitation
+
+Exploration and exploitation are balanced explicitly through acquisition parameters rather than fixed heuristics. Lower ξ (or β) biases the search toward high-performing regions, while higher values encourage sampling uncertain areas. This enables function-specific strategies that adapt as more data becomes available.
+
+### Future Extensions
+
+Support Vector Machines (SVMs) could be used to classify regions as high or low performance using a soft-margin formulation. Kernel SVMs would be particularly useful for non-linear decision boundaries. While SVMs lack calibrated uncertainty, they could complement GP-based optimisation by identifying promising regions or decision boundaries.
+
+---
+
+This README reflects my current understanding and approach and will continue to evolve as additional iterations and modelling strategies are explored throughout the BBO capstone project.
+
