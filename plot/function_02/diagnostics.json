@@ -1,0 +1,32 @@
+{
+  "function_index": 2,
+  "function_key": "f2_2d_b",
+  "dim": 2,
+  "mode": "explore",
+  "acquisition": "ei",
+  "xi": 0.05,
+  "beta": 3.0,
+  "kernel": "1.08**2 * RBF(length_scale=[0.0477, 50]) + WhiteKernel(noise_level=0.0241)",
+  "best_lml": -12.798128674916747,
+  "mu_at_choice": 0.4851987015393277,
+  "sigma_at_choice": 0.11572206872337305,
+  "exploration_ratio": 0.177782111141563,
+  "lml_candidates": [
+    {
+      "kernel": "1.08**2 * RBF(length_scale=[0.0477, 50]) + WhiteKernel(noise_level=0.0241)",
+      "lml": -12.798128674916747
+    },
+    {
+      "kernel": "1.04**2 * Matern(length_scale=[0.0478, 50], nu=1.5) + WhiteKernel(noise_level=0.0268)",
+      "lml": -13.478782713853256
+    },
+    {
+      "kernel": "1.06**2 * Matern(length_scale=[0.049, 50], nu=2.5) + WhiteKernel(noise_level=0.0269)",
+      "lml": -13.242332106837267
+    }
+  ],
+  "x_next": [
+    0.6965009267102469,
+    0.03632136997085933
+  ]
+}

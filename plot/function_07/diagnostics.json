@@ -1,0 +1,36 @@
+{
+  "function_index": 7,
+  "function_key": "f7_6d",
+  "dim": 6,
+  "mode": "explore",
+  "acquisition": "ei",
+  "xi": 0.05,
+  "beta": 3.0,
+  "kernel": "1.1**2 * RBF(length_scale=[50, 0.81, 0.0996, 50, 50, 0.275]) + WhiteKernel(noise_level=9.93e-06)",
+  "best_lml": -12.997379635293383,
+  "mu_at_choice": 1.28753381494131,
+  "sigma_at_choice": 0.20605192997647268,
+  "exploration_ratio": 0.13348913764898385,
+  "lml_candidates": [
+    {
+      "kernel": "1.1**2 * RBF(length_scale=[50, 0.81, 0.0996, 50, 50, 0.275]) + WhiteKernel(noise_level=9.93e-06)",
+      "lml": -12.997379635293383
+    },
+    {
+      "kernel": "1.12**2 * Matern(length_scale=[50, 1.26, 0.119, 50, 50, 0.323], nu=1.5) + WhiteKernel(noise_level=9.98e-06)",
+      "lml": -13.699467546869828
+    },
+    {
+      "kernel": "1.12**2 * Matern(length_scale=[50, 1.04, 0.114, 50, 50, 0.312], nu=2.5) + WhiteKernel(noise_level=9.98e-06)",
+      "lml": -13.41008037906364
+    }
+  ],
+  "x_next": [
+    0.22575722193854064,
+    0.43985563798190475,
+    0.2955443838166222,
+    0.7235417462411816,
+    0.1965607727533717,
+    0.7979236707779354
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "function_index": 8,
+  "function_key": "f8_8d",
+  "dim": 8,
+  "mode": "explore",
+  "acquisition": "ei",
+  "xi": 0.05,
+  "beta": 3.0,
+  "kernel": "6.95**2 * Matern(length_scale=[7.68, 12, 5.88, 14.2, 36.6, 12.5, 8.26, 50], nu=1.5) + WhiteKernel(noise_level=3.77e-10)",
+  "best_lml": -3.6428342211967504,
+  "mu_at_choice": 10.11277697582209,
+  "sigma_at_choice": 0.2452831087930752,
+  "exploration_ratio": 0.023566649961563983,
+  "lml_candidates": [
+    {
+      "kernel": "1.94**2 * RBF(length_scale=[1.03, 1.48, 0.713, 3.58, 5.66, 9.77, 0.745, 50]) + WhiteKernel(noise_level=1.06e-10)",
+      "lml": -7.710559446056578
+    },
+    {
+      "kernel": "6.95**2 * Matern(length_scale=[7.68, 12, 5.88, 14.2, 36.6, 12.5, 8.26, 50], nu=1.5) + WhiteKernel(noise_level=3.77e-10)",
+      "lml": -3.6428342211967504
+    },
+    {
+      "kernel": "2.84**2 * Matern(length_scale=[2.12, 3.09, 1.49, 3.7, 10, 50, 2.26, 50], nu=2.5) + WhiteKernel(noise_level=5.99e-11)",
+      "lml": -4.064492525420185
+    }
+  ],
+  "x_next": [
+    0.06347122078270895,
+    0.10866871406432599,
+    0.03698911390813164,
+    0.12946416229715807,
+    0.9272515804766917,
+    0.46916842966173766,
+    0.10199089070915845,
+    0.12310641924025756
+  ]
+}

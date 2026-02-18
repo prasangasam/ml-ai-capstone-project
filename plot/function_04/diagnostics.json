@@ -1,0 +1,34 @@
+{
+  "function_index": 4,
+  "function_key": "f4_4d_a",
+  "dim": 4,
+  "mode": "explore",
+  "acquisition": "ei",
+  "xi": 0.05,
+  "beta": 3.0,
+  "kernel": "4.67**2 * Matern(length_scale=[1.97, 1.84, 1.92, 1.9], nu=2.5) + WhiteKernel(noise_level=2.2e-12)",
+  "best_lml": -18.02485253475528,
+  "mu_at_choice": -1.6453355711498592,
+  "sigma_at_choice": 0.7209654995657014,
+  "exploration_ratio": 0.29837569014191484,
+  "lml_candidates": [
+    {
+      "kernel": "2.21**2 * RBF(length_scale=[0.788, 0.727, 0.768, 0.757]) + WhiteKernel(noise_level=8.81e-11)",
+      "lml": -18.460099313044008
+    },
+    {
+      "kernel": "7.35**2 * Matern(length_scale=[4.38, 4.09, 4.3, 4.28], nu=1.5) + WhiteKernel(noise_level=1.29e-11)",
+      "lml": -20.370373658403253
+    },
+    {
+      "kernel": "4.67**2 * Matern(length_scale=[1.97, 1.84, 1.92, 1.9], nu=2.5) + WhiteKernel(noise_level=2.2e-12)",
+      "lml": -18.02485253475528
+    }
+  ],
+  "x_next": [
+    0.4169658848300609,
+    0.404427407490084,
+    0.3569309184403272,
+    0.40613621861389915
+  ]
+}
