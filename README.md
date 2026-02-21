@@ -93,15 +93,15 @@ The challenge therefore requires careful trade-offs between learning about the f
 
 # 📂 Repository Structure
 
-###bbo-project/
-####│
-####├── bbo_gp_weekly_generator.py
-####├── plots/
-####│ ├── func01/
-####│ ├── func02/
-####│ └── ...
-####├── history/
-####├── README.md
+This project is organised to clearly separate modelling code, experiment history, and visual outputs.
+
+```text
+bbo-project/
+├── bbo_gp_weekly_generator.py   # Generates next-week queries using Gaussian Processes
+├── plots/                       # Visualisations grouped per function
+├── history/                     # Stored weekly inputs/outputs for reproducibility
+└── README.md                    # Project overview and documentation
+```
 
 ---
 
