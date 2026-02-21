@@ -97,10 +97,10 @@ This project is organised to clearly separate modelling code, experiment history
 
 ```text
 bbo-project/
-├── bbo_gp_weekly_generator.py   # Generates next-week queries using Gaussian Processes
-├── plots/                       # Visualisations grouped per function
-├── history/                     # Stored weekly inputs/outputs for reproducibility
-└── README.md                    # Project overview and documentation
+├── BBOCapstoneWeeklyInputGeneratorAndAnalysis.ipynb   # Generates next-week queries using Gaussian Processes
+├── plots/                                             # Visualisations grouped per function
+├── history/                                           # Stored weekly inputs/outputs for reproducibility
+└── README.md                                          # Project overview and documentation
 ```
 
 ---
