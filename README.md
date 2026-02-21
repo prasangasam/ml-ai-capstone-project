@@ -116,7 +116,7 @@ ml-ai-capstone-project/
 - **Week 3 – Model-Driven Bayesian Optimisation:**
   A separate Gaussian Process (GP) model was fitted for each function. Kernel choice and hyperparameters were optimised automatically by maximising the log marginal likelihood. Query points were selected using acquisition functions informed by the posterior mean μ(x) and predictive uncertainty σ(x).
 
-- **Week 4 – Uully model-driven Bayesian optimisation pipeline:**
+- **Week 4 – Fully model-driven Bayesian optimisation pipeline:**
   This week approach evolved into a fully automated optimisation workflow. Gaussian Process models were retained, but kernel selection was performed automatically using log-marginal likelihood, and exploration–exploitation behaviour was tuned per function using configurable ξ and β parameters. Additional diagnostics were introduced to track selected kernels, uncertainty levels, and exploration ratios, improving transparency and helping guide more reliable optimisation decisions across functions.
 
 ### Methods Used
