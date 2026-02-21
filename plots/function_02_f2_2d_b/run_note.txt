@@ -1,0 +1,8 @@
+Function 2 (f2_2d_b)
+mode=explore
+acquisition=ei
+xi=0.05
+beta=3.0
+next_point=0.000020-0.608134
+kernel=0.992**2 * RBF(length_scale=[0.0458, 50]) + WhiteKernel(noise_level=0.0228)
+best_lml=-13.036032650173984

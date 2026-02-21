@@ -1,0 +1,8 @@
+Function 3 (f3_3d)
+mode=exploit
+acquisition=ei
+xi=0.001
+beta=3.0
+next_point=0.114597-0.538378-0.000022
+kernel=2.03**2 * RBF(length_scale=[50, 50, 0.108]) + WhiteKernel(noise_level=0.0119)
+best_lml=-14.256345024885844

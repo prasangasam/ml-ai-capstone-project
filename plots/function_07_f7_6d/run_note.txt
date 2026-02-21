@@ -1,0 +1,8 @@
+Function 7 (f7_6d)
+mode=explore
+acquisition=ei
+xi=0.05
+beta=3.0
+next_point=0.109513-0.742227-0.296665-0.334240-0.160402-0.722658
+kernel=1.01**2 * RBF(length_scale=[50, 50, 0.106, 1.25, 50, 0.0329]) + WhiteKernel(noise_level=9.82e-09)
+best_lml=-16.008937132101096
