@@ -96,7 +96,7 @@ The challenge therefore requires careful trade-offs between learning about the f
 This project is organised to clearly separate modelling code, experiment history, and visual outputs.
 
 ```text
-bbo-project/
+ml-ai-capstone-project/
 ├── BBOCapstoneWeeklyInputGeneratorAndAnalysis.ipynb   # Generates next-week queries using Gaussian Processes
 ├── plots/                                             # Visualisations grouped per function
 ├── history/                                           # Stored weekly inputs/outputs for reproducibility
