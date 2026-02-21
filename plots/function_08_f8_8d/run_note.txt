@@ -1,0 +1,8 @@
+Function 8 (f8_8d)
+mode=exploit
+acquisition=ei
+xi=0.001
+beta=3.0
+next_point=0.151714-0.013381-0.259014-0.150928-0.965973-0.652543-0.242138-0.674780
+kernel=6.39**2 * Matern(length_scale=[4.28, 6.44, 3.41, 6.85, 22.9, 6.34, 4.38, 50], nu=2.5) + WhiteKernel(noise_level=8.18e-12)
+best_lml=2.479003812400755

@@ -1,0 +1,8 @@
+Function 4 (f4_4d_a)
+mode=exploit
+acquisition=ei
+xi=0.001
+beta=3.0
+next_point=0.425041-0.428923-0.330132-0.432393
+kernel=3.28**2 * Matern(length_scale=[1.54, 1.48, 1.6, 1.44], nu=2.5) + WhiteKernel(noise_level=1.22e-10)
+best_lml=-18.359326517713626

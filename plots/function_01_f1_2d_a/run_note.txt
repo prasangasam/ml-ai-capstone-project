@@ -1,0 +1,8 @@
+Function 1 (f1_2d_a)
+mode=exploit
+acquisition=ei
+xi=0.001
+beta=3.0
+next_point=0.763424-0.919401
+kernel=1.02**2 * RBF(length_scale=[0.0173, 50]) + WhiteKernel(noise_level=3.85e-09)
+best_lml=-16.04761668428312
