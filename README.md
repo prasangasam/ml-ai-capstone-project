@@ -93,15 +93,15 @@ The challenge therefore requires careful trade-offs between learning about the f
 
 # 📂 Repository Structure
 
-bbo-project/
-│
-├── bbo_gp_weekly_generator.py
-├── plots/
-│ ├── func01/
-│ ├── func02/
-│ └── ...
-├── history/
-├── README.md
+###bbo-project/
+####│
+####├── bbo_gp_weekly_generator.py
+####├── plots/
+####│ ├── func01/
+####│ ├── func02/
+####│ └── ...
+####├── history/
+####├── README.md
 
 ---
 
