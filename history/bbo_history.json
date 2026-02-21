@@ -1,0 +1,213 @@
+[
+  {
+    "generated_at_utc": "2026-02-21T06:35:22.858549+00:00",
+    "week_generated": 4,
+    "objective": "maximize",
+    "acquisition": "ei",
+    "n_candidates": 70000,
+    "length_scale_bounds": [
+      0.001,
+      50.0
+    ],
+    "white_noise_bounds": [
+      1e-12,
+      0.1
+    ],
+    "exploit_tol_frac_of_range": 0.1,
+    "xi_exploit": 0.001,
+    "xi_explore": 0.05,
+    "beta_exploit": 1.0,
+    "beta_explore": 3.0,
+    "portal_lines": [
+      "0.763424-0.919401",
+      "0.000020-0.608134",
+      "0.114597-0.538378-0.000022",
+      "0.425041-0.428923-0.330132-0.432393",
+      "0.207234-0.049908-0.993246-0.999556",
+      "0.486971-0.421311-0.700489-0.897495-0.304443",
+      "0.109513-0.742227-0.296665-0.334240-0.160402-0.722658",
+      "0.151714-0.013381-0.259014-0.150928-0.965973-0.652543-0.242138-0.674780"
+    ],
+    "diagnostics": [
+      {
+        "function_index": 1,
+        "function_key": "f1_2d_a",
+        "dim": 2,
+        "mode": "exploit",
+        "acquisition": "ei",
+        "xi": 0.001,
+        "beta": 3.0,
+        "chosen_kernel": "1.02**2 * RBF(length_scale=[0.0173, 50]) + WhiteKernel(noise_level=3.85e-09)",
+        "best_lml": -16.04761668428312,
+        "mu_at_choice": -0.00024076626847746168,
+        "sigma_at_choice": 0.0009970704656992676,
+        "exploration_ratio_proxy": 0.44555103150566777,
+        "y_best_so_far": 7.710875114502849e-16,
+        "x_next": [
+          0.7634235556399804,
+          0.9194014148000519
+        ],
+        "portal_line": "0.763424-0.919401"
+      },
+      {
+        "function_index": 2,
+        "function_key": "f2_2d_b",
+        "dim": 2,
+        "mode": "explore",
+        "acquisition": "ei",
+        "xi": 0.05,
+        "beta": 3.0,
+        "chosen_kernel": "0.992**2 * RBF(length_scale=[0.0458, 50]) + WhiteKernel(noise_level=0.0228)",
+        "best_lml": -13.036032650173984,
+        "mu_at_choice": 0.19930423534317285,
+        "sigma_at_choice": 0.1864332903647077,
+        "exploration_ratio_proxy": 0.4278568619065074,
+        "y_best_so_far": 0.5389961189269181,
+        "x_next": [
+          1.969437010573838e-05,
+          0.6081342007232124
+        ],
+        "portal_line": "0.000020-0.608134"
+      },
+      {
+        "function_index": 3,
+        "function_key": "f3_3d",
+        "dim": 3,
+        "mode": "exploit",
+        "acquisition": "ei",
+        "xi": 0.001,
+        "beta": 3.0,
+        "chosen_kernel": "2.03**2 * RBF(length_scale=[50, 50, 0.108]) + WhiteKernel(noise_level=0.0119)",
+        "best_lml": -14.256345024885844,
+        "mu_at_choice": -0.04228817624735794,
+        "sigma_at_choice": 0.06231994079062464,
+        "exploration_ratio_proxy": 0.5901055954593035,
+        "y_best_so_far": -0.03061042303613871,
+        "x_next": [
+          0.11459669237993242,
+          0.538378142920463,
+          2.1673143578260223e-05
+        ],
+        "portal_line": "0.114597-0.538378-0.000022"
+      },
+      {
+        "function_index": 4,
+        "function_key": "f4_4d_a",
+        "dim": 4,
+        "mode": "exploit",
+        "acquisition": "ei",
+        "xi": 0.001,
+        "beta": 3.0,
+        "chosen_kernel": "3.28**2 * Matern(length_scale=[1.54, 1.48, 1.6, 1.44], nu=2.5) + WhiteKernel(noise_level=1.22e-10)",
+        "best_lml": -18.359326517713626,
+        "mu_at_choice": 0.6483094838457042,
+        "sigma_at_choice": 0.19864548863129813,
+        "exploration_ratio_proxy": 0.23426419453711192,
+        "y_best_so_far": 0.6588288043220065,
+        "x_next": [
+          0.4250406573633365,
+          0.4289228370146061,
+          0.3301320186450497,
+          0.43239298886340216
+        ],
+        "portal_line": "0.425041-0.428923-0.330132-0.432393"
+      },
+      {
+        "function_index": 5,
+        "function_key": "f5_4d_b",
+        "dim": 4,
+        "mode": "exploit",
+        "acquisition": "ei",
+        "xi": 0.001,
+        "beta": 3.0,
+        "chosen_kernel": "3.6**2 * Matern(length_scale=[50, 50, 1.86, 0.481], nu=2.5) + WhiteKernel(noise_level=0.00076)",
+        "best_lml": -8.950673239478078,
+        "mu_at_choice": 2961.263842665125,
+        "sigma_at_choice": 53.98188414965557,
+        "exploration_ratio_proxy": 0.01790297413130117,
+        "y_best_so_far": 2967.924604693576,
+        "x_next": [
+          0.20723423829828513,
+          0.049907754582582564,
+          0.9932460680237212,
+          0.9995561742709805
+        ],
+        "portal_line": "0.207234-0.049908-0.993246-0.999556"
+      },
+      {
+        "function_index": 6,
+        "function_key": "f6_5d",
+        "dim": 5,
+        "mode": "exploit",
+        "acquisition": "ei",
+        "xi": 0.001,
+        "beta": 3.0,
+        "chosen_kernel": "1.3**2 * RBF(length_scale=[0.425, 0.625, 1.09, 0.876, 0.396]) + WhiteKernel(noise_level=1.19e-09)",
+        "best_lml": -21.958463763672842,
+        "mu_at_choice": -0.4045802493796491,
+        "sigma_at_choice": 0.13454468807227668,
+        "exploration_ratio_proxy": 0.24909919676501296,
+        "y_best_so_far": -0.6016622426617185,
+        "x_next": [
+          0.48697055090863683,
+          0.4213105071102835,
+          0.700489127596626,
+          0.8974946166024287,
+          0.3044426034685347
+        ],
+        "portal_line": "0.486971-0.421311-0.700489-0.897495-0.304443"
+      },
+      {
+        "function_index": 7,
+        "function_key": "f7_6d",
+        "dim": 6,
+        "mode": "explore",
+        "acquisition": "ei",
+        "xi": 0.05,
+        "beta": 3.0,
+        "chosen_kernel": "1.01**2 * RBF(length_scale=[50, 50, 0.106, 1.25, 50, 0.0329]) + WhiteKernel(noise_level=9.82e-09)",
+        "best_lml": -16.008937132101096,
+        "mu_at_choice": 1.24039460311673,
+        "sigma_at_choice": 0.18508826863582217,
+        "exploration_ratio_proxy": 0.12544250575803173,
+        "y_best_so_far": 1.3649683044991994,
+        "x_next": [
+          0.10951337149700224,
+          0.7422271489973419,
+          0.29666501693826763,
+          0.3342397938156394,
+          0.16040222222016587,
+          0.7226576799326553
+        ],
+        "portal_line": "0.109513-0.742227-0.296665-0.334240-0.160402-0.722658"
+      },
+      {
+        "function_index": 8,
+        "function_key": "f8_8d",
+        "dim": 8,
+        "mode": "exploit",
+        "acquisition": "ei",
+        "xi": 0.001,
+        "beta": 3.0,
+        "chosen_kernel": "6.39**2 * Matern(length_scale=[4.28, 6.44, 3.41, 6.85, 22.9, 6.34, 4.38, 50], nu=2.5) + WhiteKernel(noise_level=8.18e-12)",
+        "best_lml": 2.479003812400755,
+        "mu_at_choice": 9.969984281656654,
+        "sigma_at_choice": 0.07399653621745005,
+        "exploration_ratio_proxy": 0.007366518419405318,
+        "y_best_so_far": 9.9182466822364,
+        "x_next": [
+          0.15171447867378463,
+          0.013380540656653173,
+          0.25901368753984855,
+          0.1509275096376559,
+          0.9659733780463103,
+          0.6525425304297697,
+          0.2421376280206634,
+          0.6747796713390499
+        ],
+        "portal_line": "0.151714-0.013381-0.259014-0.150928-0.965973-0.652543-0.242138-0.674780"
+      }
+    ],
+    "note": "Outputs for this generated week are not yet known. Paste portal outputs into the next week's block and re-run."
+  }
+]
