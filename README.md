@@ -9,6 +9,7 @@ This repository documents my work on the Black-Box Optimisation (BBO) capstone p
 The overall goal of the BBO capstone project is to efficiently **maximise the output of multiple unknown functions** while operating under limited evaluation budgets. This closely reflects real-world machine learning scenarios such as hyperparameter optimisation, simulation-based optimisation, and experimental design, where evaluations are costly and uncertainty must be managed explicitly.
 
 This project supports my current and future career by developing practical skills in Bayesian optimisation, uncertainty-aware modelling, and iterative decision-making. These skills are directly transferable to data science, ML engineering, and research roles where optimisation must be performed with incomplete knowledge.
+
 ---
 
 ## Section 2: Inputs and Outputs
