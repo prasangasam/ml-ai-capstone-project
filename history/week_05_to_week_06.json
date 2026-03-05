@@ -37,7 +37,9 @@
         ]
       ],
       "mu_at_choice": 64.96904227079247,
-      "sigma_at_choice": 11.610678638182547
+      "sigma_at_choice": 11.610678638182547,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     },
     {
       "function_index": 2,
@@ -61,7 +63,9 @@
         ]
       ],
       "mu_at_choice": 0.521874137514269,
-      "sigma_at_choice": 0.1281113029242131
+      "sigma_at_choice": 0.1281113029242131,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     },
     {
       "function_index": 3,
@@ -85,7 +89,9 @@
         ]
       ],
       "mu_at_choice": 71.30298418663486,
-      "sigma_at_choice": 4.947718101545249
+      "sigma_at_choice": 4.947718101545249,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     },
     {
       "function_index": 4,
@@ -109,7 +115,9 @@
         ]
       ],
       "mu_at_choice": 2.3261966547649138,
-      "sigma_at_choice": 1.2586725887572137
+      "sigma_at_choice": 1.2586725887572137,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     },
     {
       "function_index": 5,
@@ -133,7 +141,9 @@
         ]
       ],
       "mu_at_choice": 1050.2442383109765,
-      "sigma_at_choice": 75.49524981589829
+      "sigma_at_choice": 75.49524981589829,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     },
     {
       "function_index": 6,
@@ -157,7 +167,9 @@
         ]
       ],
       "mu_at_choice": 0.7373746704279098,
-      "sigma_at_choice": 0.34374907926932075
+      "sigma_at_choice": 0.34374907926932075,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     },
     {
       "function_index": 7,
@@ -181,7 +193,9 @@
         ]
       ],
       "mu_at_choice": 81.3152327170394,
-      "sigma_at_choice": 11.202148726716718
+      "sigma_at_choice": 11.202148726716718,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     },
     {
       "function_index": 8,
@@ -205,8 +219,10 @@
         ]
       ],
       "mu_at_choice": 10.7366930823215,
-      "sigma_at_choice": 1.6241477506720716
+      "sigma_at_choice": 1.6241477506720716,
+      "method_used": "gp",
+      "method_reason": "GP (standard)"
     }
   ],
-  "generated_at": "2026-03-05T11:49:44.413539+00:00"
+  "generated_at": "2026-03-05T12:25:16.878956+00:00"
 }
