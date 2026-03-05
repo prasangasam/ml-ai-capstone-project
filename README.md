@@ -6,7 +6,7 @@ This repository documents my work on the Black‑Box Optimisation (BBO) capstone
 
 The overall goal of the BBO capstone project is to efficiently **maximise the output of multiple unknown functions** while operating under limited evaluation budgets. This mirrors real‑world ML scenarios such as hyperparameter tuning, simulation optimisation and experimental design, where evaluations are expensive and uncertainty must be managed explicitly.
 
-This project strengthening skills in Bayesian optimisation, uncertainty‑aware modelling, experiment tracking and automated decision pipelines – all useful when designing production ML systems on cloud platforms.
+This project strengthens skills in Bayesian optimisation, uncertainty‑aware modelling, experiment tracking, automated decision pipelines, and advanced machine learning techniques including CNN-based surrogate modeling – all essential for designing production ML systems on cloud platforms.
 
 ---
 
@@ -81,6 +81,9 @@ Implemented sophisticated parameter tuning and convergence analysis. Advanced ac
 - **Per-Function Tuning**: ξ (explore/exploit balance) and β (UCB weighting)
 - **Progressive Visualization**: Week-by-week historical analysis system
 - **Automated Data Management**: Robust loading with format auto-detection
+- **CNN-Enhanced Optimization**: Deep learning surrogate models and landscape modeling
+- **Advanced Parameter Tuning**: Sophisticated convergence analysis and adaptive exploration
+- **Multi-Objective Portfolio Balancing**: Intelligent resource allocation across functions
 
 ---
 
@@ -97,6 +100,13 @@ For detailed technical architecture, component descriptions, and system diagrams
 ```bash
 pip install -r requirements.txt
 python scripts/run_week.py --initial_dir data/initial_data --weekly_dir data/weekly
+```
+
+**Optional CNN Enhancement:**
+
+```bash
+# For CNN-based surrogate modeling and landscape optimization
+pip install torch torchvision matplotlib scipy
 ```
 
 ### Visualization Generation
@@ -138,18 +148,41 @@ Each week folder contains:
 - Multiple input format support (portal tokens, arrays)
 - Week numbering validation and consistency checks
 
+### Advanced Optimization Features
+
+- **Week 6 Sophisticated Parameter Tuning**: Adaptive exploration with convergence analysis
+- **Multi-Objective Portfolio Balancing**: Intelligent resource allocation across function portfolios
+- **Enhanced Uncertainty Quantification**: Robust decision-making with uncertainty boosting
+- **CNN Integration Framework**: Deep learning surrogate models and landscape optimization
+- **Hybrid Ensemble Methods**: CNN-GP combinations for enhanced modeling capability
+
 ### Progressive Analysis System
 
 - Week-by-week historical visualization preservation
 - Cumulative progress tracking with consistent scaling
 - Change detection and improvement analysis
+- Advanced convergence monitoring and stability scoring
+
+### Modern ML Integration
+
+- **CNN Surrogate Models**: Deep learning-based function approximation
+- **CNN Landscape Modeling**: Spatial optimization for 2D functions  
+- **Monte Carlo Uncertainty**: Enhanced uncertainty quantification
+- **Transfer Learning**: Cross-campaign knowledge transfer
 
 ### Modular Architecture
 
 - Clean separation of concerns (data, models, visualization)
-- Extensible pipeline for new acquisition functions
+- Extensible pipeline for new acquisition functions and CNN methods
 - Comprehensive error handling and validation
+- Seamless integration between classical and deep learning approaches
 
 ---
 
-This README reflects the complete BBO optimization system with enhanced visualization capabilities and robust data management, supporting thorough analysis of the optimization campaign's effectiveness and progression.
+This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, and optional CNN integration for deep learning-enhanced surrogate modeling and acquisition strategies.
+
+## Additional Resources
+
+- **[Technical Architecture](docs/architecture.md)**: Comprehensive system architecture with Mermaid diagrams
+- **[CNN Integration Guide](docs/cnn_integration_guide.md)**: Deep learning enhancement documentation
+- **[Week 6 Advanced Demo](scripts/demo_week6_advanced.py)**: Sophisticated optimization features demonstration
