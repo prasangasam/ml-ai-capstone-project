@@ -119,7 +119,7 @@ python scripts/progressive_visualize.py
 - **artifacts/progressive_visualizations/**: Historical progression showing how optimization looked at each week
   - `week1/`: Cumulative view through Week 1
   - `week2/`: Cumulative view through Week 2
-  - `week5/`: Complete campaign view
+  - `week5/`: Cumulative view through Week 5\n  - `week6/`: Advanced optimization and refinement analysis
 
 Each week folder contains:
 
