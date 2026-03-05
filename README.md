@@ -6,30 +6,36 @@ This repository documents my work on the Black‑Box Optimisation (BBO) capstone
 
 The overall goal of the BBO capstone project is to efficiently **maximise the output of multiple unknown functions** while operating under limited evaluation budgets. This mirrors real‑world ML scenarios such as hyperparameter tuning, simulation optimisation and experimental design, where evaluations are expensive and uncertainty must be managed explicitly.
 
-This project supports my career as a lead developer / solution architect by strengthening skills in Bayesian optimisation, uncertainty‑aware modelling, experiment tracking and automated decision pipelines – all useful when designing production ML systems on cloud platforms.
+This project strengthening skills in Bayesian optimisation, uncertainty‑aware modelling, experiment tracking and automated decision pipelines – all useful when designing production ML systems on cloud platforms.
 
 ---
 
-## Section 2: Inputs and Outputs
+## Section 2: Data Structure and Formats
 
-Each iteration consists of submitting one query per function and receiving a scalar response.
+### Initial Seed Data (Directory Structure)
 
-### Inputs
+`data/initial_data/function_1..function_8/initial_inputs.npy` and `initial_outputs.npy`
 
-- Query format: `x1-x2-x3-...-xn`
-- Each value in `[0,1]`
-- Six decimal precision
-- Dimensions: 2D → 8D
-- Constraint: One query per function per week
+### Weekly Data (Matrix Format)
 
-Example:
-`0.372451-0.684219`
+- `data/weekly/inputs.txt` - Historical query submissions
+- `data/weekly/outputs.txt` - Corresponding function evaluation results
 
-### Outputs
+Each **row** corresponds to a week (week1..weekN) and contains values for **all 8 functions**.
 
-- Single real‑valued score
-- Unknown scale and noise
-- Used to update surrogate models and guide next queries
+### Supported Input Formats
+
+**weekly_inputs.txt** - Portal tokens with 8 functions per row:
+
+- Space or comma separated: `0.123456-0.654321, 0.111111-0.222222, ...`
+- With week index: `1 0.123456-0.654321 0.111111-0.222222 ...`
+
+**weekly_outputs.txt** - Function evaluation results:
+
+- Float values: `1.23, -0.04, ...` (8 total)
+- With week index: `1 1.23 -0.04 ...` (8 total)
+
+> The system automatically handles line wrapping and format variations for robust data loading.
 
 ---
 
@@ -37,89 +43,176 @@ Example:
 
 The objective is to **maximise each unknown function** while working with:
 
-- Limited query budget
+- Limited query budget (one per function per week)
 - Sequential feedback only
-- Unknown function structure
-- Increasing dimensionality
+- Unknown function structure and noise characteristics
+- Increasing dimensionality (2D to 8D across functions)
 
-This requires balancing learning the search space with exploiting promising regions.
+This requires balancing learning the search space with exploiting promising regions through sophisticated acquisition functions and surrogate modeling.
 
 ---
 
-## Section 4: Technical Approach
+## Section 4: Technical Approach and Strategy Evolution
 
-### Strategy Evolution
+### Strategy Development Across Weeks
 
 **Week 1 – Structured Exploration:**  
 Initial queries prioritised coverage and diversity. With no feedback available, points were chosen away from boundaries to reduce uncertainty, especially in higher‑dimensional functions.
 
 **Week 2 – Adaptive Exploration vs Exploitation:**  
-Week‑1 outputs allowed relative performance comparison. Most functions remained exploratory due to high uncertainty, while a few promising regions were refined locally.
+Week‑1 outputs allowed relative performance comparison. Most functions remained exploratory due to high uncertainty, while promising regions began targeted refinement.
 
 **Week 3 – Model‑Driven Bayesian Optimisation:**  
-A Gaussian Process model was fitted per function. Kernel choice and hyperparameters were tuned automatically using log‑marginal likelihood. Queries were selected using Expected Improvement based on posterior mean μ(x) and uncertainty σ(x).
+Gaussian Process models fitted per function with automatic kernel selection. Expected Improvement acquisition function balances posterior mean μ(x) and uncertainty σ(x) for optimal query placement.
 
-**Week 4 – Fully Automated Optimisation Pipeline:**  
-The workflow evolved into a complete Bayesian optimisation system with automatic kernel switching, per‑function exploration/exploitation tuning using ξ and β, diagnostic tracking, and automated history storage. High‑performing functions moved to exploitation, while uncertain high‑dimensional ones continued exploration.
+**Week 4 – Fully Automated Pipeline:**  
+Complete Bayesian optimisation system with automatic kernel switching, per‑function exploration/exploitation tuning, diagnostic tracking, and automated history preservation.
 
-**Week 5 – Architecture‑Inspired Strategy:**  
-With more data available, ideas from neural network design influenced optimisation. Functions were treated like layered models: feature importance from GP length‑scales identified relevant dimensions, acquisition tuning acted like learning‑rate scheduling, and model comparison mirrored architecture selection. Exploration focused on uncertain “feature hierarchies,” while exploitation refined high‑performing regions.
+**Week 5 – Progressive Analysis Integration:**  
+Enhanced with comprehensive visualization system tracking week-by-week optimization progress, enabling detailed campaign analysis and strategy validation.
 
-### Methods Used
+### Methods and Architecture
 
-- Gaussian Process regression with RBF and Matérn kernels
-- Automatic kernel selection via marginal likelihood
-- Expected Improvement acquisition
-- Per‑function tuning using ξ (explore/exploit) and β (UCB‑style weighting)
-- Diagnostics tracking kernel, ξ, β and exploration ratio
-- Automated weekly history storage and plotting
-
-### Exploration vs Exploitation
-
-Exploration and exploitation are controlled explicitly through acquisition parameters. Small ξ values focus on improving known good regions, while larger ξ encourages sampling uncertain areas. High‑dimensional functions remain exploratory longer because sparse data increases uncertainty.
-
-### Possible Extensions
-
-Support Vector Machines could classify high vs low performance regions using soft‑margin SVMs. Kernel SVMs would help detect non‑linear boundaries. Neural networks could also be explored as surrogate models when data volume grows.
+- **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
+- **Expected Improvement Acquisition**: Balances exploration and exploitation
+- **Per-Function Tuning**: ξ (explore/exploit balance) and β (UCB weighting)
+- **Progressive Visualization**: Week-by-week historical analysis system
+- **Automated Data Management**: Robust loading with format auto-detection
 
 ---
 
-## Repository Architecture
+## Section 5: Repository Architecture
 
 ```
-ml-ai-capstone-project/
+bbo_capstone_matrix_weekly_project/
 │
-├── bbo_gp_weekly_generator.py
-├── plots/
-│   ├── func01/
-│   ├── func02/
-│   └── ...
-├── history/
+├── scripts/
+│   ├── run_week.py                    # Main BBO execution pipeline
+│   ├── visualize_progress.py          # Complete campaign visualization
+│   └── progressive_visualize.py       # Week-by-week historical graphs
+│
+├── src/
+│   └── bbo/                           # Core optimization modules
+│       ├── __init__.py
+│       ├── config.py                  # Configuration management
+│       ├── data_loader.py             # Robust data loading with auto-format
+│       ├── gp.py                      # Gaussian Process implementation
+│       ├── io.py                      # Input/output utilities
+│       ├── pipeline.py                # Main optimization pipeline
+│       └── strategy.py                # Acquisition strategies
+│
+├── data/
+│   ├── initial_data/                  # Seed data (NPY format)
+│   │   └── function_1..8/
+│   └── weekly/                        # Historical campaign data
+│       ├── inputs.txt                 # Query history (portal format)
+│       └── outputs.txt                # Evaluation results
+│
+├── artifacts/
+│   ├── visualizations/                # Complete campaign analysis
+│   └── progressive_visualizations/    # Week-by-week historical graphs
+│       ├── week1/                     # Week 1 cumulative view
+│       ├── week2/                     # Week 2 cumulative view
+│       ├── ...                        # Progressive weekly analysis
+│       └── README.md                  # Visualization guide
+│
+├── docs/
+│   └── architecture.md                # Technical documentation
+│
+├── requirements.txt
 └── README.md
 ```
 
-### Architecture Diagram
+### Architecture Flow
 
 ```
-Historical Data + Weekly Results
-            │
-            ▼
-     Gaussian Process Models
-            │
+Historical Data (inputs.txt/outputs.txt)
+              │
+              ▼
+    Enhanced Data Loader (auto-format detection)
+              │
+              ▼
+     Gaussian Process Models (per function)
+              │
 Kernel Selection + Hyperparameter Tuning
-            │
-            ▼
-   Acquisition Function (EI / UCB)
-            │
-Explore vs Exploit Decision (ξ, β)
-            │
-            ▼
-       Next Week Queries
-            │
-            ▼
+              │
+              ▼
+   Acquisition Function (Expected Improvement)
+              │
+  Explore vs Exploit Decision (ξ, β tuning)
+              │
+              ▼
+        Next Week Queries
+              │
+              ▼
      Portal Submission → New Data
+              │
+              ▼
+   Progressive Visualization System
 ```
 
 ---
 
-This README reflects my evolving optimisation strategy and will continue to be updated as the BBO capstone progresses.
+## Section 6: Running the System
+
+### Installation and Setup
+
+```bash
+pip install -r requirements.txt
+python scripts/run_week.py --initial_dir data/initial_data --weekly_dir data/weekly
+```
+
+### Visualization Generation
+
+**Complete Campaign Analysis:**
+
+```bash
+python scripts/visualize_progress.py
+```
+
+**Progressive Week-by-Week History:**
+
+```bash
+python scripts/progressive_visualize.py
+```
+
+### Generated Outputs
+
+- **artifacts/visualizations/**: Complete optimization campaign analysis
+- **artifacts/progressive_visualizations/**: Historical progression showing how optimization looked at each week
+  - `week1/`: Cumulative view through Week 1
+  - `week2/`: Cumulative view through Week 2
+  - `week5/`: Complete campaign view
+
+Each week folder contains:
+
+- Function progress trajectories
+- Week-to-week improvement analysis
+- Performance summaries and success rates
+- Optimization landscape heatmaps
+
+---
+
+## Section 7: Key Features and Enhancements
+
+### Robust Data Management
+
+- Automatic line-wrapping detection and correction
+- Multiple input format support (portal tokens, arrays)
+- Week numbering validation and consistency checks
+
+### Progressive Analysis System
+
+- Week-by-week historical visualization preservation
+- Cumulative progress tracking with consistent scaling
+- Change detection and improvement analysis
+
+### Modular Architecture
+
+- Clean separation of concerns (data, models, visualization)
+- Extensible pipeline for new acquisition functions
+- Comprehensive error handling and validation
+
+---
+
+This README reflects the complete BBO optimization system with enhanced visualization capabilities and robust data management, supporting thorough analysis of the optimization campaign's effectiveness and progression.
