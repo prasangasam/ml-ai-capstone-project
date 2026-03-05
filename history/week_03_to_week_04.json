@@ -1,0 +1,212 @@
+{
+  "acquisition": "ei",
+  "week_k_observed": 3,
+  "initial_dir": "data\\initial_data",
+  "weekly_dir": "data\\weekly",
+  "weekly_mode": "matrix",
+  "next_week_portal_lines": [
+    "0.304730-0.675906",
+    "0.809688-0.106458",
+    "0.043677-0.774528-0.782188",
+    "0.618359-0.202167-0.388187-0.420159",
+    "0.947363-0.412181-0.997389-0.880298",
+    "0.303726-0.134031-0.726527-0.993554-0.850702",
+    "0.323716-0.868388-0.194687-0.376587-0.565868-0.532259",
+    "0.007468-0.182833-0.512212-0.810576-0.173020-0.835371-0.385282-0.541478"
+  ],
+  "diagnostics": [
+    {
+      "function_index": 1,
+      "mode": "exploit",
+      "xi": 0.001,
+      "beta": 3.0,
+      "kernel": "0.91**2 * RBF(length_scale=[0.156, 0.0373]) + WhiteKernel(noise_level=3.13e-07)",
+      "best_lml": -16.316519372558343,
+      "lml_candidates": [
+        [
+          "0.91**2 * RBF(length_scale=[0.156, 0.0373]) + WhiteKernel(noise_level=3.13e-07)",
+          -16.316519372558343
+        ],
+        [
+          "0.93**2 * Matern(length_scale=[0.159, 0.0355], nu=1.5) + WhiteKernel(noise_level=6.53e-11)",
+          -16.951345932128298
+        ],
+        [
+          "0.924**2 * Matern(length_scale=[0.161, 0.0369], nu=2.5) + WhiteKernel(noise_level=8.13e-09)",
+          -16.737685749600807
+        ]
+      ],
+      "mu_at_choice": 66.31764409148663,
+      "sigma_at_choice": 8.167445683727241
+    },
+    {
+      "function_index": 2,
+      "mode": "exploit",
+      "xi": 0.001,
+      "beta": 3.0,
+      "kernel": "1**2 * RBF(length_scale=[0.0124, 0.46]) + WhiteKernel(noise_level=1e-12)",
+      "best_lml": -17.6232253650507,
+      "lml_candidates": [
+        [
+          "1**2 * RBF(length_scale=[0.0124, 0.46]) + WhiteKernel(noise_level=1e-12)",
+          -17.6232253650507
+        ],
+        [
+          "0.991**2 * Matern(length_scale=[0.188, 0.0645], nu=1.5) + WhiteKernel(noise_level=7.22e-11)",
+          -17.938936155723024
+        ],
+        [
+          "1.01**2 * Matern(length_scale=[0.012, 0.477], nu=2.5) + WhiteKernel(noise_level=7.45e-06)",
+          -17.858642556808867
+        ]
+      ],
+      "mu_at_choice": 57.16617830547375,
+      "sigma_at_choice": 14.03201633784628
+    },
+    {
+      "function_index": 3,
+      "mode": "exploit",
+      "xi": 0.001,
+      "beta": 3.0,
+      "kernel": "1.08**2 * RBF(length_scale=[1.1, 0.0888, 0.518]) + WhiteKernel(noise_level=5.3e-10)",
+      "best_lml": -17.669080046249423,
+      "lml_candidates": [
+        [
+          "1.08**2 * RBF(length_scale=[1.1, 0.0888, 0.518]) + WhiteKernel(noise_level=5.3e-10)",
+          -17.669080046249423
+        ],
+        [
+          "1.19**2 * Matern(length_scale=[1.53, 0.144, 0.657], nu=1.5) + WhiteKernel(noise_level=4.34e-11)",
+          -19.771891496251765
+        ],
+        [
+          "1.2**2 * Matern(length_scale=[0.743, 0.42, 0.267], nu=2.5) + WhiteKernel(noise_level=3.9e-11)",
+          -19.10426499032185
+        ]
+      ],
+      "mu_at_choice": 83.91293009800098,
+      "sigma_at_choice": 9.608551867532356
+    },
+    {
+      "function_index": 4,
+      "mode": "exploit",
+      "xi": 0.001,
+      "beta": 3.0,
+      "kernel": "1.45**2 * Matern(length_scale=[0.707, 0.855, 0.775, 0.494], nu=2.5) + WhiteKernel(noise_level=2.2e-12)",
+      "best_lml": -28.46285727044746,
+      "lml_candidates": [
+        [
+          "1.15**2 * RBF(length_scale=[0.39, 0.578, 0.5, 0.288]) + WhiteKernel(noise_level=1.63e-10)",
+          -28.819180344836568
+        ],
+        [
+          "1.92**2 * Matern(length_scale=[1.23, 1.36, 1.22, 0.848], nu=1.5) + WhiteKernel(noise_level=1.29e-11)",
+          -28.540556805720758
+        ],
+        [
+          "1.45**2 * Matern(length_scale=[0.707, 0.855, 0.775, 0.494], nu=2.5) + WhiteKernel(noise_level=2.2e-12)",
+          -28.46285727044746
+        ]
+      ],
+      "mu_at_choice": 2.433617267614464,
+      "sigma_at_choice": 1.3494900845589621
+    },
+    {
+      "function_index": 5,
+      "mode": "explore",
+      "xi": 0.05,
+      "beta": 3.0,
+      "kernel": "1.13**2 * RBF(length_scale=[50, 50, 0.315, 0.0689]) + WhiteKernel(noise_level=9.99e-06)",
+      "best_lml": -24.704170910212035,
+      "lml_candidates": [
+        [
+          "1.13**2 * RBF(length_scale=[50, 50, 0.315, 0.0689]) + WhiteKernel(noise_level=9.99e-06)",
+          -24.704170910212035
+        ],
+        [
+          "1.14**2 * Matern(length_scale=[50, 50, 0.501, 0.0861], nu=1.5) + WhiteKernel(noise_level=3.66e-09)",
+          -26.05059137332804
+        ],
+        [
+          "1.16**2 * Matern(length_scale=[50, 50, 0.441, 0.0824], nu=2.5) + WhiteKernel(noise_level=2.01e-09)",
+          -25.350489194191837
+        ]
+      ],
+      "mu_at_choice": 1159.3521736559405,
+      "sigma_at_choice": 66.94995520343629
+    },
+    {
+      "function_index": 6,
+      "mode": "exploit",
+      "xi": 0.001,
+      "beta": 3.0,
+      "kernel": "1.07**2 * RBF(length_scale=[0.262, 0.106, 50, 6.27, 50]) + WhiteKernel(noise_level=9.89e-06)",
+      "best_lml": -19.596664167954827,
+      "lml_candidates": [
+        [
+          "1.07**2 * RBF(length_scale=[0.262, 0.106, 50, 6.27, 50]) + WhiteKernel(noise_level=9.89e-06)",
+          -19.596664167954827
+        ],
+        [
+          "1.04**2 * Matern(length_scale=[0.314, 0.127, 50, 50, 50], nu=1.5) + WhiteKernel(noise_level=2.74e-09)",
+          -22.905805982711307
+        ],
+        [
+          "1.06**2 * Matern(length_scale=[0.307, 0.118, 50, 50, 50], nu=2.5) + WhiteKernel(noise_level=6.01e-09)",
+          -21.527425127576386
+        ]
+      ],
+      "mu_at_choice": 72.26888796700702,
+      "sigma_at_choice": 8.10530142114241
+    },
+    {
+      "function_index": 7,
+      "mode": "exploit",
+      "xi": 0.001,
+      "beta": 3.0,
+      "kernel": "0.935**2 * RBF(length_scale=[50, 50, 50, 0.065, 0.168, 50]) + WhiteKernel(noise_level=9.85e-06)",
+      "best_lml": -33.84353942301689,
+      "lml_candidates": [
+        [
+          "0.935**2 * RBF(length_scale=[50, 50, 50, 0.065, 0.168, 50]) + WhiteKernel(noise_level=9.85e-06)",
+          -33.84353942301689
+        ],
+        [
+          "0.95**2 * Matern(length_scale=[50, 50, 50, 0.0724, 0.197, 50], nu=1.5) + WhiteKernel(noise_level=9.79e-06)",
+          -37.39536719413408
+        ],
+        [
+          "0.953**2 * Matern(length_scale=[50, 50, 50, 0.0719, 0.191, 50], nu=2.5) + WhiteKernel(noise_level=9.6e-06)",
+          -35.997292381044815
+        ]
+      ],
+      "mu_at_choice": 65.89750622783971,
+      "sigma_at_choice": 2.504398725911381
+    },
+    {
+      "function_index": 8,
+      "mode": "explore",
+      "xi": 0.05,
+      "beta": 3.0,
+      "kernel": "1.07**2 * Matern(length_scale=[0.257, 6.81, 50, 50, 50, 50, 0.105, 50], nu=1.5) + WhiteKernel(noise_level=3.77e-10)",
+      "best_lml": -42.16674929455788,
+      "lml_candidates": [
+        [
+          "1.27**2 * RBF(length_scale=[0.316, 50, 50, 0.172, 0.506, 50, 50, 0.986]) + WhiteKernel(noise_level=9.89e-06)",
+          -44.32146399835619
+        ],
+        [
+          "1.07**2 * Matern(length_scale=[0.257, 6.81, 50, 50, 50, 50, 0.105, 50], nu=1.5) + WhiteKernel(noise_level=3.77e-10)",
+          -42.16674929455788
+        ],
+        [
+          "1.35**2 * Matern(length_scale=[0.459, 5.76, 50, 0.203, 0.73, 50, 50, 1.36], nu=2.5) + WhiteKernel(noise_level=9.71e-06)",
+          -45.53811077662776
+        ]
+      ],
+      "mu_at_choice": 8.81807825141697,
+      "sigma_at_choice": 1.817849978349307
+    }
+  ],
+  "generated_at": "2026-03-05T06:09:23.230059+00:00"
+}
