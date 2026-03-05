@@ -81,75 +81,9 @@ Enhanced with comprehensive visualization system tracking week-by-week optimizat
 
 ---
 
-## Section 5: Repository Architecture
+## Section 5: System Architecture
 
-```
-bbo_capstone_matrix_weekly_project/
-│
-├── scripts/
-│   ├── run_week.py                    # Main BBO execution pipeline
-│   ├── visualize_progress.py          # Complete campaign visualization
-│   └── progressive_visualize.py       # Week-by-week historical graphs
-│
-├── src/
-│   └── bbo/                           # Core optimization modules
-│       ├── __init__.py
-│       ├── config.py                  # Configuration management
-│       ├── data_loader.py             # Robust data loading with auto-format
-│       ├── gp.py                      # Gaussian Process implementation
-│       ├── io.py                      # Input/output utilities
-│       ├── pipeline.py                # Main optimization pipeline
-│       └── strategy.py                # Acquisition strategies
-│
-├── data/
-│   ├── initial_data/                  # Seed data (NPY format)
-│   │   └── function_1..8/
-│   └── weekly/                        # Historical campaign data
-│       ├── inputs.txt                 # Query history (portal format)
-│       └── outputs.txt                # Evaluation results
-│
-├── artifacts/
-│   ├── visualizations/                # Complete campaign analysis
-│   └── progressive_visualizations/    # Week-by-week historical graphs
-│       ├── week1/                     # Week 1 cumulative view
-│       ├── week2/                     # Week 2 cumulative view
-│       ├── ...                        # Progressive weekly analysis
-│       └── README.md                  # Visualization guide
-│
-├── docs/
-│   └── architecture.md                # Technical documentation
-│
-├── requirements.txt
-└── README.md
-```
-
-### Architecture Flow
-
-```
-Historical Data (inputs.txt/outputs.txt)
-              │
-              ▼
-    Enhanced Data Loader (auto-format detection)
-              │
-              ▼
-     Gaussian Process Models (per function)
-              │
-Kernel Selection + Hyperparameter Tuning
-              │
-              ▼
-   Acquisition Function (Expected Improvement)
-              │
-  Explore vs Exploit Decision (ξ, β tuning)
-              │
-              ▼
-        Next Week Queries
-              │
-              ▼
-     Portal Submission → New Data
-              │
-              ▼
-   Progressive Visualization System
-```
+For detailed technical architecture, component descriptions, and system diagrams, see [docs/architecture.md](docs/architecture.md).
 
 ---
 
