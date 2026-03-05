@@ -178,6 +178,36 @@ graph TD
 - **Cumulative Visualization**: Progressive view of campaign evolution
 - **Performance Analytics**: Success rate and improvement tracking
 
+## Technical Approach and Strategy Evolution
+
+### Strategy Development Across Weeks
+
+**Week 1 – Structured Exploration:**  
+Initial queries prioritised coverage and diversity. With no feedback available, points were chosen away from boundaries to reduce uncertainty, especially in higher‑dimensional functions.
+
+**Week 2 – Adaptive Exploration vs Exploitation:**  
+Week‑1 outputs allowed relative performance comparison. Most functions remained exploratory due to high uncertainty, while promising regions began targeted refinement.
+
+**Week 3 – Model‑Driven Bayesian Optimisation:**  
+Gaussian Process models fitted per function with automatic kernel selection. Expected Improvement acquisition function balances posterior mean μ(x) and uncertainty σ(x) for optimal query placement.
+
+**Week 4 – Fully Automated Pipeline:**  
+Complete Bayesian optimisation system with automatic kernel switching, per‑function exploration/exploitation tuning, diagnostic tracking, and automated history preservation.
+
+**Week 5 – Progressive Analysis Integration:**  
+Enhanced with comprehensive visualization system tracking week-by-week optimization progress, enabling detailed campaign analysis and strategy validation.
+
+**Week 6 – Advanced Optimization and Refinement:**  
+Implemented sophisticated parameter tuning and convergence analysis. Advanced acquisition function strategies with adaptive exploration parameters, multi-objective balancing across function portfolios, and enhanced uncertainty quantification for robust decision-making in final optimization phases.
+
+### Methods and Architecture Integration
+
+- **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
+- **Expected Improvement Acquisition**: Balances exploration and exploitation
+- **Per-Function Tuning**: ξ (explore/exploit balance) and β (UCB weighting)
+- **Progressive Visualization**: Week-by-week historical analysis system
+- **Automated Data Management**: Robust loading with format auto-detection
+
 ## Configuration and Extensibility
 
 The system supports configuration through:
