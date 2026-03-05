@@ -19,6 +19,15 @@ XI_EXPLORE=0.05
 BETA_EXPLOIT=1.0
 BETA_EXPLORE=3.0
 
+# Week 6: Advanced Optimization Parameters
+ADAPTIVE_EXPLORATION_RATE=0.85  # Decay rate for exploration over time
+CONVERGENCE_WINDOW=3  # Window size for convergence analysis
+CONVERGENCE_THRESHOLD=1e-4  # Improvement threshold for convergence
+MULTI_OBJECTIVE_WEIGHTS=[1.0, 0.8, 0.6, 0.4, 1.2, 1.5, 0.9, 1.1]  # Function portfolio balancing
+UNCERTAINTY_BOOST_FACTOR=1.5  # Enhanced uncertainty quantification multiplier
+PARAMETER_ADAPTATION_RATE=0.1  # Rate for sophisticated parameter tuning
+MIN_IMPROVEMENT_THRESHOLD=1e-5  # Minimum improvement for mode switching
+
 HISTORY_DIR=Path("history")
 ARTIFACTS_DIR=Path("artifacts")
 SUBMISSIONS_DIR=ARTIFACTS_DIR/"submissions"
