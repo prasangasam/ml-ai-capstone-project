@@ -10,19 +10,23 @@ from . import config
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
+
 def _acq_ei(mu: np.ndarray, sigma: np.ndarray, y_best: float, xi: float) -> np.ndarray:
     sigma = np.maximum(sigma, 1e-12)
     imp = mu - y_best - xi
     z = imp / sigma
     return imp * norm.cdf(z) + sigma * norm.pdf(z)
 
+
 def _acq_pi(mu: np.ndarray, sigma: np.ndarray, y_best: float, xi: float) -> np.ndarray:
     sigma = np.maximum(sigma, 1e-12)
     z = (mu - y_best - xi) / sigma
     return norm.cdf(z)
 
+
 def _acq_ucb(mu: np.ndarray, sigma: np.ndarray, beta: float) -> np.ndarray:
     return mu + beta * sigma
+
 
 def _restarts(dim: int) -> int:
     if dim <= 3:
@@ -30,6 +34,7 @@ def _restarts(dim: int) -> int:
     if dim <= 5:
         return config.RESTARTS_MID_D
     return config.RESTARTS_HIGH_D
+
 
 def _kernel_pool(dim: int) -> List[Any]:
     ls0 = 0.30 if dim <= 3 else (0.40 if dim <= 5 else 0.60)
@@ -46,6 +51,7 @@ def _kernel_pool(dim: int) -> List[Any]:
         )
     return pool
 
+
 def fit_best_gp_by_lml(X: np.ndarray, y: np.ndarray, dim: int, seed: int):
     best_gp: Optional[GaussianProcessRegressor] = None
     best_lml = -np.inf
@@ -56,7 +62,7 @@ def fit_best_gp_by_lml(X: np.ndarray, y: np.ndarray, dim: int, seed: int):
             alpha=config.NOISE_ALPHA,
             normalize_y=True,
             n_restarts_optimizer=_restarts(dim),
-            random_state=seed + 17*j,
+            random_state=seed + 17 * j,
         )
         gp.fit(X, y)
         lml = float(gp.log_marginal_likelihood(gp.kernel_.theta))
@@ -67,14 +73,51 @@ def fit_best_gp_by_lml(X: np.ndarray, y: np.ndarray, dim: int, seed: int):
     assert best_gp is not None
     return best_gp, best_lml, details
 
-def propose_next_point(X: np.ndarray, y: np.ndarray, *, acquisition: str, xi: float, beta: float, seed: int, n_candidates: int):
+
+def _build_candidates(
+    rng: np.random.Generator,
+    *,
+    X: np.ndarray,
+    y: np.ndarray,
+    dim: int,
+    n_candidates: int,
+    strategy: str,
+) -> np.ndarray:
+    strategy = strategy.lower().strip()
+    if strategy == "explore":
+        return rng.uniform(0.0, 1.0, size=(n_candidates, dim))
+
+    if strategy == "refine":
+        best_x = np.asarray(X[int(np.argmax(y))], dtype=float)
+        n_local = max(1, int(0.75 * n_candidates))
+        n_global = max(1, n_candidates - n_local)
+        local_scale = 0.06 if dim <= 4 else 0.08
+        local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), 0.0, 0.999999)
+        global_ = rng.uniform(0.0, 1.0, size=(n_global, dim))
+        return np.vstack([local, global_])
+
+    return rng.uniform(0.0, 1.0, size=(n_candidates, dim))
+
+
+def propose_next_point(
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    acquisition: str,
+    xi: float,
+    beta: float,
+    seed: int,
+    n_candidates: int,
+    strategy: str = "bo",
+):
     rng = np.random.default_rng(seed)
     dim = X.shape[1]
     gp, best_lml, lml_details = fit_best_gp_by_lml(X, y, dim=dim, seed=seed)
 
-    Xcand = rng.uniform(0.0, 1.0, size=(n_candidates, dim))
+    Xcand = _build_candidates(rng, X=X, y=y, dim=dim, n_candidates=n_candidates, strategy=strategy)
     mu, sigma = gp.predict(Xcand, return_std=True)
-    mu = mu.reshape(-1); sigma = sigma.reshape(-1)
+    mu = mu.reshape(-1)
+    sigma = sigma.reshape(-1)
     y_best = float(np.max(y))
 
     a = acquisition.lower().strip()
@@ -94,4 +137,6 @@ def propose_next_point(X: np.ndarray, y: np.ndarray, *, acquisition: str, xi: fl
         "lml_candidates": [(k, float(v)) for k, v in lml_details],
         "mu_at_choice": float(mu[idx]),
         "sigma_at_choice": float(sigma[idx]),
+        "strategy": strategy,
+        "acquisition_used": a,
     }
