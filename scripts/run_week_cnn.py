@@ -11,17 +11,20 @@ import numpy as np
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from bbo.data_loader import load_initial_from_dir, load_weekly
-from bbo.io import save_week_output
+from bbo import io
 from bbo import config
 
 
 def should_use_cnn(dim, n_points, week_k=None):
     """Determine if CNN should be used based on function characteristics"""
+    # Handle week_k being a string like "matrix"
+    week_num = 6 if isinstance(week_k, str) else week_k
+    
     # CNN usage criteria from integration guide
     if dim >= 4 and n_points >= 25:
         return True, f"4D+ function with {n_points} points - CNN beneficial"
-    elif week_k and week_k >= 4 and dim >= 3 and n_points >= 20:
-        return True, f"Week {week_k}: 3D+ function with sufficient data"
+    elif week_num and week_num >= 4 and dim >= 3 and n_points >= 20:
+        return True, f"Week {week_num}: 3D+ function with sufficient data"
     else:
         return False, f"Using GP: {dim}D function with {n_points} points"
 
@@ -39,7 +42,10 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
     if week_k is None:
         week_k = week_k_loaded
     
-    print(f"📊 Running optimization for Week {week_k}")
+    # Handle week_k being a string like "matrix" - assume week 6 for advanced features
+    week_num = 6 if isinstance(week_k, str) else week_k
+    
+    print(f"📊 Running optimization for Week {week_num}")
     print(f"🎯 Found {len(funcs)} functions")
     
     # Prepare for optimization
@@ -104,9 +110,9 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
         print(f"   🔧 Method: {method_reason}")
         
         # Get optimization parameters
-        if week6_available and week_k >= 6:
+        if week6_available and week_num >= 6:
             # Use Week 6 advanced parameters
-            params = adaptive_exploration_params(week_k, current_y, i)
+            params = adaptive_exploration_params(week_num, current_y, i)
             xi = params["xi"]
             beta = params["beta"]
             print(f"   ✨ Advanced params: xi={xi:.3f}, beta={beta:.3f}")
@@ -121,15 +127,19 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
         # Run optimization
         start_time = time.time()
         
+        # Use memory-safe parameters
+        safe_n_candidates = min(config.N_CANDIDATES, 5000)  # Cap at 5000 for memory safety
+        
         if use_cnn_for_func:
             try:
-                # Use CNN optimization
+                # Use CNN optimization with faster training for testing
                 x_next, report = propose_next_point_cnn(
                     current_X, current_y,
                     acquisition=config.ACQUISITION,
                     xi=xi,
                     seed=config.RNG_SEED + 31*i,
-                    n_candidates=config.N_CANDIDATES,
+                    n_candidates=safe_n_candidates,
+                    max_epochs=50,  # Reduced epochs for faster processing
                 )
                 report["method_used"] = "cnn_surrogate"
                 print(f"   🤖 CNN optimization completed")
@@ -144,7 +154,7 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
                     acquisition=config.ACQUISITION,
                     xi=xi, beta=beta,
                     seed=config.RNG_SEED + 31*i,
-                    n_candidates=config.N_CANDIDATES,
+                    n_candidates=safe_n_candidates,
                 )
                 report["method_used"] = "gp_fallback"
                 report["cnn_error"] = str(e)
@@ -155,7 +165,7 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
                 acquisition=config.ACQUISITION,
                 xi=xi, beta=beta,
                 seed=config.RNG_SEED + 31*i,
-                n_candidates=config.N_CANDIDATES,
+                n_candidates=safe_n_candidates,
             )
             report["method_used"] = "gp"
         
@@ -163,8 +173,9 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
         print(f"   ⏱️ Optimization time: {opt_time:.2f}s")
         print(f"   📍 Next point: {x_next}")
         
-        # Store results
-        results.append(x_next)
+        # Store results as portal lines (formatted for submission)
+        portal_line = io.fmt_query(x_next)
+        results.append(portal_line)
         
         # Enhanced report
         report["function_idx"] = i
@@ -175,12 +186,12 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
         optimization_reports.append(report)
     
     # Save results
-    submission_path = save_week_output(results, xi_params)
+    submission_path = io.save_submission_file(week_next=week_num+1, portal_lines=results)
     print(f"\n💾 Results saved to: {submission_path}")
     
     # Print summary
     print(f"\n📋 Optimization Summary:")
-    print(f"   Week: {week_k}")
+    print(f"   Week: {week_num}")
     print(f"   Functions optimized: {len(results)}")
     
     if use_cnn:
@@ -195,10 +206,10 @@ def run_hybrid_optimization(initial_dir, weekly_dir, use_cnn=False, cnn_weight=0
             print(f"   CNN used for functions: {cnn_functions}")
     
     return {
-        'week_k': week_k,
+        'week_k': week_num,
         'submission_path': submission_path,
         'optimization_reports': optimization_reports,
-        'results': results,
+        'portal_lines': results,
         'xi_params': xi_params
     }
 
