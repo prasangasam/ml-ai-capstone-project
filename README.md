@@ -8,6 +8,8 @@ The overall goal of the BBO capstone project is to efficiently **maximise the ou
 
 This project strengthens skills in Bayesian optimisation, uncertainty‑aware modelling, experiment tracking, automated decision pipelines, and advanced machine learning techniques including CNN-based surrogate modeling – all essential for designing production ML systems on cloud platforms.
 
+Key Insight: Inspired by the Squirrel Switching Optimizer, this project extends Bayesian optimisation into a hybrid adaptive framework that dynamically selects between exploration, model-based search, and local refinement strategies.
+
 ---
 
 ## Section 2: Data Structure and Formats
@@ -74,6 +76,15 @@ Enhanced with comprehensive visualization system tracking week-by-week optimizat
 **Week 6 – Advanced Optimization and Refinement:**  
 Implemented sophisticated parameter tuning and convergence analysis. Advanced acquisition function strategies with adaptive exploration parameters, multi-objective balancing across function portfolios, and enhanced uncertainty quantification for robust decision-making in final optimization phases.
 
+**Week 7 – Hybrid Switching Optimization (Squirrel-Inspired):**
+The optimisation framework was extended from a static Bayesian approach to a dynamic hybrid switching strategy, inspired by the Squirrel (Switching Optimizer). The system now adaptively switches between:
+
+Exploration (random/global search)
+Bayesian optimisation (model-based search)
+Local refinement (greedy optimisation near best points)
+
+An acquisition function portfolio (EI, PI, UCB) improves robustness, while late-stage optimisation focuses on local refinement to accelerate convergence.
+
 ### Methods and Architecture
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -129,7 +140,9 @@ python scripts/progressive_visualize.py
 - **artifacts/progressive_visualizations/**: Historical progression showing how optimization looked at each week
   - `week1/`: Cumulative view through Week 1
   - `week2/`: Cumulative view through Week 2
-  - `week5/`: Cumulative view through Week 5\n  - `week6/`: Advanced optimization and refinement analysis
+  - `week5/`: Cumulative view through Week 5\n
+  - `week6/`: Advanced optimization and refinement analysis
+  - `week7/`: Hybrid switching optimization analysis
 
 Each week folder contains:
 
@@ -156,6 +169,14 @@ Each week folder contains:
 - **CNN Integration Framework**: Deep learning surrogate models and landscape optimization
 - **Hybrid Ensemble Methods**: CNN-GP combinations for enhanced modeling capability
 
+### Week 7 Switching Optimisation Enhancements
+
+- Squirrel-inspired strategy switching
+- Stagnation detection mechanism
+- Hybrid candidate generation (local + global)
+- Acquisition portfolio (EI, PI, UCB)
+- Improved convergence with 16+ data points
+
 ### Progressive Analysis System
 
 - Week-by-week historical visualization preservation
@@ -166,7 +187,7 @@ Each week folder contains:
 ### Modern ML Integration
 
 - **CNN Surrogate Models**: Deep learning-based function approximation
-- **CNN Landscape Modeling**: Spatial optimization for 2D functions  
+- **CNN Landscape Modeling**: Spatial optimization for 2D functions
 - **Monte Carlo Uncertainty**: Enhanced uncertainty quantification
 - **Transfer Learning**: Cross-campaign knowledge transfer
 
