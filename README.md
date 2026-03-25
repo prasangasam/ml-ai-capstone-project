@@ -85,6 +85,30 @@ Local refinement (greedy optimisation near best points)
 
 An acquisition function portfolio (EI, PI, UCB) improves robustness, while late-stage optimisation focuses on local refinement to accelerate convergence.
 
+**Week 8 – LLM-Aware Optimisation :**
+With 17 data points available, the optimisation strategy is further extended to incorporate **LLM-centred considerations**, reflecting real-world behaviours such as tokenisation effects, prompt sensitivity, decoding variability, and attention limits.
+
+At this stage, the optimisation landscape is treated as **partially non-smooth**, where small input changes can lead to disproportionate output variation. As a result, the framework shifts toward **controlled exploitation with targeted exploration**.
+
+The system now introduces:
+
+- **Controlled Exploitation Bias:**
+  Increased focus on refining high-performing regions identified in earlier weeks, while maintaining selective exploration in uncertain areas.
+
+- **Instability Detection and Response:**
+  Functions exhibiting high variance across recent outputs are flagged as unstable, triggering additional exploration to avoid premature convergence.
+
+- **Similarity-Based Penalty (Prompt Overfitting Proxy):**
+  Repeated or near-duplicate query points are penalised to prevent over-exploitation of narrow regions, reflecting prompt overfitting behaviour observed in LLM systems.
+
+- **Boundary Sensitivity Adjustment:**
+  Query points near extreme boundaries are penalised to reduce instability risks associated with irregular response behaviour and tokenisation artefacts.
+
+- **Variance-Aware Uncertainty Boosting:**
+  The uncertainty term (σ) is dynamically increased for unstable regions, ensuring continued exploration where the response surface is unreliable.
+
+This enhancement aligns the optimisation process with real-world ML systems, where uncertainty persists even with increasing data, and robustness must be prioritised alongside performance.
+
 ### Methods and Architecture
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -143,6 +167,7 @@ python scripts/progressive_visualize.py
   - `week5/`: Cumulative view through Week 5\n
   - `week6/`: Advanced optimization and refinement analysis
   - `week7/`: Hybrid switching optimization analysis
+  - `week8/`: LLM-Aware Optimisation
 
 Each week folder contains:
 
@@ -162,6 +187,8 @@ Each week folder contains:
 - Week numbering validation and consistency checks
 
 ### Advanced Optimization Features
+
+- **Week 8 LLM-Aware Optimisation Enhancements**: Instability-aware acquisition, similarity penalties, and boundary control mechanisms reflecting tokenisation effects and prompt sensitivity
 
 - **Week 6 Sophisticated Parameter Tuning**: Adaptive exploration with convergence analysis
 - **Multi-Objective Portfolio Balancing**: Intelligent resource allocation across function portfolios
@@ -200,7 +227,9 @@ Each week folder contains:
 
 ---
 
-This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, and optional CNN integration for deep learning-enhanced surrogate modeling and acquisition strategies.
+This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, and Week 8 LLM-aware optimisation enhancements.
+
+The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, and attention limitations into the optimisation framework.
 
 ## Additional Resources
 

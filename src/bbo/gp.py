@@ -87,16 +87,37 @@ def _build_candidates(
     if strategy == "explore":
         return rng.uniform(0.0, 1.0, size=(n_candidates, dim))
 
+    best_x = np.asarray(X[int(np.argmax(y))], dtype=float)
+
     if strategy == "refine":
-        best_x = np.asarray(X[int(np.argmax(y))], dtype=float)
-        n_local = max(1, int(0.75 * n_candidates))
+        n_local = max(1, int(config.W8_LOCAL_CANDIDATE_RATIO * n_candidates))
         n_global = max(1, n_candidates - n_local)
-        local_scale = 0.06 if dim <= 4 else 0.08
+        local_scale = config.W8_REFINEMENT_SCALE_LOW_D if dim <= 4 else config.W8_REFINEMENT_SCALE_HIGH_D
         local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), 0.0, 0.999999)
         global_ = rng.uniform(0.0, 1.0, size=(n_global, dim))
         return np.vstack([local, global_])
 
-    return rng.uniform(0.0, 1.0, size=(n_candidates, dim))
+    # Week 8: BO uses a mixed local/global candidate set instead of fully global search.
+    n_local = max(1, int(0.55 * n_candidates))
+    n_global = max(1, n_candidates - n_local)
+    local_scale = config.W8_BO_LOCAL_SCALE_LOW_D if dim <= 4 else config.W8_BO_LOCAL_SCALE_HIGH_D
+    local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), 0.0, 0.999999)
+    global_ = rng.uniform(0.0, 1.0, size=(n_global, dim))
+    return np.vstack([local, global_])
+
+
+def _boundary_penalty(Xcand: np.ndarray, margin: float = config.W8_BOUNDARY_MARGIN) -> np.ndarray:
+    low = np.clip((margin - Xcand) / margin, 0.0, None)
+    high = np.clip((Xcand - (1.0 - margin)) / margin, 0.0, None)
+    return np.mean(low + high, axis=1)
+
+
+def _repeat_penalty(Xcand: np.ndarray, X_hist: np.ndarray, repeat_distance: float = config.W8_REPEAT_DISTANCE) -> np.ndarray:
+    if X_hist.size == 0:
+        return np.zeros(Xcand.shape[0], dtype=float)
+    dists = np.sqrt(((Xcand[:, None, :] - X_hist[None, :, :]) ** 2).sum(axis=2))
+    min_dist = dists.min(axis=1)
+    return np.clip((repeat_distance - min_dist) / repeat_distance, 0.0, 1.0)
 
 
 def propose_next_point(
@@ -109,6 +130,7 @@ def propose_next_point(
     seed: int,
     n_candidates: int,
     strategy: str = "bo",
+    instability: float = 0.0,
 ):
     rng = np.random.default_rng(seed)
     dim = X.shape[1]
@@ -122,13 +144,18 @@ def propose_next_point(
 
     a = acquisition.lower().strip()
     if a == "ei":
-        score = _acq_ei(mu, sigma, y_best, xi)
+        raw_score = _acq_ei(mu, sigma, y_best, xi)
     elif a == "pi":
-        score = _acq_pi(mu, sigma, y_best, xi)
+        raw_score = _acq_pi(mu, sigma, y_best, xi)
     elif a == "ucb":
-        score = _acq_ucb(mu, sigma, beta)
+        raw_score = _acq_ucb(mu, sigma, beta)
     else:
         raise ValueError("ACQUISITION must be one of: ei, pi, ucb")
+
+    sigma_bonus = config.W8_SIGMA_BOOST * float(instability) * sigma
+    boundary_pen = _boundary_penalty(Xcand)
+    repeat_pen = _repeat_penalty(Xcand, X)
+    score = raw_score + sigma_bonus - config.W8_BOUNDARY_PENALTY_WEIGHT * boundary_pen - config.W8_REPEAT_PENALTY_WEIGHT * repeat_pen
 
     idx = int(np.argmax(score))
     return Xcand[idx], {
@@ -139,4 +166,10 @@ def propose_next_point(
         "sigma_at_choice": float(sigma[idx]),
         "strategy": strategy,
         "acquisition_used": a,
+        "instability": float(instability),
+        "raw_score_at_choice": float(raw_score[idx]),
+        "adjusted_score_at_choice": float(score[idx]),
+        "sigma_bonus_at_choice": float(sigma_bonus[idx]),
+        "boundary_penalty_at_choice": float(boundary_pen[idx]),
+        "repeat_penalty_at_choice": float(repeat_pen[idx]),
     }
