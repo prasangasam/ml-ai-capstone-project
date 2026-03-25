@@ -13,9 +13,11 @@ from .strategy import (
     choose_acquisition,
     choose_strategy,
     decide_mode_maximise,
+    llm_strategy_metadata,
     multi_objective_portfolio_balance,
     tune_params,
     is_stagnating,
+    recent_instability,
 )
 
 # CNN integration (optional)
@@ -95,8 +97,15 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
         y_last = float(last_week_outputs[func_idx])
         base_mode = decide_mode_maximise(y_last, f.y)
         stagnating = is_stagnating(f.y)
+        instability = recent_instability(f.y)
         strategy = choose_strategy(week_k, f.y)
-        acquisition_name = choose_acquisition(week_k, stagnating=stagnating, default=config.ACQUISITION)
+        acquisition_name = choose_acquisition(
+            week_k,
+            stagnating=stagnating,
+            instability=instability,
+            strategy=strategy,
+            default=config.ACQUISITION,
+        )
 
         tuned = tune_params(
             base_mode,
@@ -108,6 +117,12 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
 
         portfolio_weight = float(portfolio_weights.get(func_idx, 1.0))
         acq_params = _extract_acq_params(tuned, portfolio_weight)
+        llm_meta = llm_strategy_metadata(
+            dim=f.X.shape[1],
+            strategy=strategy,
+            instability=instability,
+            n_observations=len(f.y),
+        )
 
         use_cnn_for_func = False
         method_reason = "GP (standard)"
@@ -133,6 +148,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                 report["method_reason"] = method_reason
                 report["strategy"] = strategy
                 report["acquisition_used"] = acquisition_name
+                report["instability"] = float(instability)
             except Exception as e:
                 x_next, report = propose_next_point(
                     f.X,
@@ -143,6 +159,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                     seed=config.RNG_SEED + 31 * i,
                     n_candidates=config.N_CANDIDATES,
                     strategy=strategy,
+                    instability=instability,
                 )
                 report["method_used"] = "gp_fallback"
                 report["cnn_error"] = str(e)
@@ -157,6 +174,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                 seed=config.RNG_SEED + 31 * i,
                 n_candidates=config.N_CANDIDATES,
                 strategy=strategy,
+                instability=instability,
             )
             report["method_used"] = "gp"
             report["method_reason"] = method_reason
@@ -168,6 +186,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
             "effective_mode": tuned.get("mode", base_mode),
             "strategy": strategy,
             "stagnating": stagnating,
+            "instability": float(instability),
             "portfolio_weight": portfolio_weight,
             "xi": acq_params["xi"],
             "beta": acq_params["beta"],
@@ -175,6 +194,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
             "y_last": y_last,
             "y_best_so_far": float(np.max(f.y)),
             "n_observations": int(len(f.y)),
+            **llm_meta,
             **tuned,
             **report,
         })
