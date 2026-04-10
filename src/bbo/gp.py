@@ -28,7 +28,9 @@ def _acq_ucb(mu: np.ndarray, sigma: np.ndarray, beta: float) -> np.ndarray:
     return mu + beta * sigma
 
 
-def _restarts(dim: int) -> int:
+def _restarts(dim: int, n_points: int) -> int:
+    if dim >= config.W9_FAST_GP_DIM_THRESHOLD and n_points >= config.W9_FAST_GP_POINT_THRESHOLD:
+        return config.RESTARTS_FAST_HIGH_D
     if dim <= 3:
         return config.RESTARTS_LOW_D
     if dim <= 5:
@@ -56,12 +58,13 @@ def fit_best_gp_by_lml(X: np.ndarray, y: np.ndarray, dim: int, seed: int):
     best_gp: Optional[GaussianProcessRegressor] = None
     best_lml = -np.inf
     details: List[Tuple[str, float]] = []
+    n_restarts = _restarts(dim, len(y))
     for j, k in enumerate(_kernel_pool(dim)):
         gp = GaussianProcessRegressor(
             kernel=k,
             alpha=config.NOISE_ALPHA,
             normalize_y=True,
-            n_restarts_optimizer=_restarts(dim),
+            n_restarts_optimizer=n_restarts,
             random_state=seed + 17 * j,
         )
         gp.fit(X, y)
@@ -85,7 +88,7 @@ def _build_candidates(
 ) -> np.ndarray:
     strategy = strategy.lower().strip()
     if strategy == "explore":
-        return rng.uniform(0.0, 1.0, size=(n_candidates, dim))
+        return rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_candidates, dim))
 
     best_x = np.asarray(X[int(np.argmax(y))], dtype=float)
 
@@ -93,16 +96,23 @@ def _build_candidates(
         n_local = max(1, int(config.W8_LOCAL_CANDIDATE_RATIO * n_candidates))
         n_global = max(1, n_candidates - n_local)
         local_scale = config.W8_REFINEMENT_SCALE_LOW_D if dim <= 4 else config.W8_REFINEMENT_SCALE_HIGH_D
-        local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), 0.0, 0.999999)
-        global_ = rng.uniform(0.0, 1.0, size=(n_global, dim))
+        local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
+        global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
         return np.vstack([local, global_])
 
-    # Week 8: BO uses a mixed local/global candidate set instead of fully global search.
+    if strategy == "hedge":
+        n_local = max(1, int(config.W8_HEDGE_LOCAL_RATIO * n_candidates))
+        n_global = max(1, n_candidates - n_local)
+        local_scale = config.W8_HEDGE_SCALE_LOW_D if dim <= 4 else config.W8_HEDGE_SCALE_HIGH_D
+        local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
+        global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
+        return np.vstack([local, global_])
+
     n_local = max(1, int(0.55 * n_candidates))
     n_global = max(1, n_candidates - n_local)
     local_scale = config.W8_BO_LOCAL_SCALE_LOW_D if dim <= 4 else config.W8_BO_LOCAL_SCALE_HIGH_D
-    local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), 0.0, 0.999999)
-    global_ = rng.uniform(0.0, 1.0, size=(n_global, dim))
+    local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
+    global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
     return np.vstack([local, global_])
 
 
@@ -120,6 +130,17 @@ def _repeat_penalty(Xcand: np.ndarray, X_hist: np.ndarray, repeat_distance: floa
     return np.clip((repeat_distance - min_dist) / repeat_distance, 0.0, 1.0)
 
 
+def _ruggedness_penalty(Xcand: np.ndarray, X_hist: np.ndarray, y_hist: np.ndarray) -> np.ndarray:
+    if len(y_hist) < 5 or X_hist.shape[0] < 5:
+        return np.zeros(Xcand.shape[0], dtype=float)
+    top_k = min(5, X_hist.shape[0])
+    top_idx = np.argsort(y_hist)[-top_k:]
+    anchors = X_hist[top_idx]
+    dists = np.sqrt(((Xcand[:, None, :] - anchors[None, :, :]) ** 2).sum(axis=2))
+    nearest = dists.min(axis=1)
+    return np.exp(-nearest / max(0.05 * Xcand.shape[1], 1e-6))
+
+
 def propose_next_point(
     X: np.ndarray,
     y: np.ndarray,
@@ -131,6 +152,9 @@ def propose_next_point(
     n_candidates: int,
     strategy: str = "bo",
     instability: float = 0.0,
+    emergence_score: float = 0.0,
+    ruggedness_score: float = 0.0,
+    dimension_scaling_pressure: float = 0.0,
 ):
     rng = np.random.default_rng(seed)
     dim = X.shape[1]
@@ -152,10 +176,19 @@ def propose_next_point(
     else:
         raise ValueError("ACQUISITION must be one of: ei, pi, ucb")
 
-    sigma_bonus = config.W8_SIGMA_BOOST * float(instability) * sigma
+    sigma_bonus = sigma * (config.W8_SIGMA_BOOST * float(instability) + float(dimension_scaling_pressure))
+    emergence_bonus = sigma * max(0.0, abs(float(emergence_score)) - config.W9_EMERGENCE_Z_THRESHOLD) * config.W9_EMERGENCE_WEIGHT
     boundary_pen = _boundary_penalty(Xcand)
     repeat_pen = _repeat_penalty(Xcand, X)
-    score = raw_score + sigma_bonus - config.W8_BOUNDARY_PENALTY_WEIGHT * boundary_pen - config.W8_REPEAT_PENALTY_WEIGHT * repeat_pen
+    rugged_pen = _ruggedness_penalty(Xcand, X, y)
+    score = (
+        raw_score
+        + sigma_bonus
+        + emergence_bonus
+        - config.W8_BOUNDARY_PENALTY_WEIGHT * boundary_pen
+        - config.W8_REPEAT_PENALTY_WEIGHT * repeat_pen
+        - config.W9_RUGGEDNESS_PENALTY_WEIGHT * float(ruggedness_score) * rugged_pen
+    )
 
     idx = int(np.argmax(score))
     return Xcand[idx], {
@@ -167,9 +200,15 @@ def propose_next_point(
         "strategy": strategy,
         "acquisition_used": a,
         "instability": float(instability),
+        "emergence_score": float(emergence_score),
+        "ruggedness_score": float(ruggedness_score),
+        "dimension_scaling_pressure": float(dimension_scaling_pressure),
         "raw_score_at_choice": float(raw_score[idx]),
         "adjusted_score_at_choice": float(score[idx]),
         "sigma_bonus_at_choice": float(sigma_bonus[idx]),
+        "emergence_bonus_at_choice": float(emergence_bonus[idx]),
         "boundary_penalty_at_choice": float(boundary_pen[idx]),
         "repeat_penalty_at_choice": float(repeat_pen[idx]),
+        "ruggedness_penalty_at_choice": float(rugged_pen[idx]),
+        "fast_gp_mode": bool(dim >= config.W9_FAST_GP_DIM_THRESHOLD and len(y) >= config.W9_FAST_GP_POINT_THRESHOLD),
     }

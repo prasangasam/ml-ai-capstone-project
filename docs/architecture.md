@@ -31,7 +31,9 @@ graph TB
     subgraph "Analysis & Tracking"
         J --> L[Progressive<br/>Visualizations]
         J --> M[Campaign<br/>Analysis]
-        L --> N[Historical<br/>Archive]
+        G --> R[Diagnostic<br/>Metadata]
+        R --> N[Historical<br/>Archive]
+        L --> N
         M --> N
     end
 ```
@@ -45,19 +47,20 @@ flowchart TD
         C[outputs.txt<br/>Function Results] --> B
         D[Initial Data<br/>NPY Files] --> B
         B --> E[Data Validation &<br/>Line Wrapping Fix]
+        E --> E2[NumPy Scalar Parsing<br/>np.float64(...)]
     end
     
     subgraph "Model Training"
-        E --> F[Per-Function<br/>Dataset Split]
+        E2 --> F[Per-Function<br/>Dataset Split]
         F --> G[GP Model<br/>Training]
         G --> H[Kernel Selection<br/>RBF/Matérn]
         H --> I[Hyperparameter<br/>Optimization]
     end
     
-    subgraph "Acquisition Strategy"
-        I --> J[Expected Improvement<br/>Calculation]
+    subgraph "Strategy Analysis"
+        I --> J[Instability, Emergence,<br/>Ruggedness Scoring]
         J --> K[Exploration vs<br/>Exploitation Balance]
-        K --> L[Query Point<br/>Selection]
+        K --> L[Hedge / BO / Refine<br/>Strategy Selection]
     end
     
     subgraph "Output Generation"
@@ -100,6 +103,7 @@ graph LR
     subgraph "Artifacts Generation"
         M[artifacts/visualizations/<br/>Complete Analysis] --> H
         N[artifacts/progressive_visualizations/<br/>Week-by-Week History] --> I
+        O[artifacts/submissions/<br/>Portal Files] --> G
     end
 ```
 
@@ -119,10 +123,12 @@ sequenceDiagram
     D-->>P: Clean, validated datasets
     
     loop For each function (1-8)
+        P->>S: Compute instability, emergence, and scaling metadata
+        S-->>P: Strategy and acquisition selection
         P->>GP: Train model on historical data
         GP-->>P: Fitted GP model
-        P->>S: Calculate acquisition function
-        S-->>P: Next query point
+        P->>GP: Score hedge/local/global candidates
+        GP-->>P: Best next query point
     end
     
     P->>U: Output query recommendations
@@ -154,10 +160,11 @@ graph TD
     subgraph "Artifacts Generation"
         E --> K[visualizations/<br/>Complete Analysis]
         E --> L[progressive_visualizations/<br/>week1/, week2/, ...]
+        E --> M[submissions/<br/>week_XX_queries.txt]
     end
     
     subgraph "Historical Tracking"
-        G --> M[week_XX_to_week_YY.json<br/>Transition Records]
+        G --> N[week_XX_to_week_YY.json<br/>Transition Records]
     end
 ```
 
@@ -166,17 +173,20 @@ graph TD
 ### Robust Data Management
 - **Auto-format Detection**: Handles multiple input formats seamlessly
 - **Line Wrapping Fix**: Automatically corrects wrapped data lines
+- **NumPy Scalar Parsing**: Safely reads `np.float64(...)` rows from weekly outputs
 - **Validation Pipeline**: Ensures data consistency across weeks
 
 ### Modular Gaussian Process System
 - **Per-Function Models**: Independent GP models for each optimization target
 - **Automatic Kernel Selection**: RBF and Matérn kernels with hyperparameter tuning
+- **Fast GP Fallback**: Lightweight late-stage fitting path for high-dimensional cases
 - **Scalable Architecture**: Easy addition of new acquisition functions
 
 ### Progressive Analysis Framework
 - **Historical Preservation**: Week-by-week optimization state tracking
 - **Cumulative Visualization**: Progressive view of campaign evolution
 - **Performance Analytics**: Success rate and improvement tracking
+- **Diagnostic Metadata**: Instability, emergence, ruggedness, and scaling summaries
 
 ## Technical Approach and Strategy Evolution
 
@@ -200,6 +210,15 @@ Enhanced with comprehensive visualization system tracking week-by-week optimizat
 **Week 6 – Advanced Optimization and Refinement:**  
 Implemented sophisticated parameter tuning and convergence analysis. Advanced acquisition function strategies with adaptive exploration parameters, multi-objective balancing across function portfolios, and enhanced uncertainty quantification for robust decision-making in final optimization phases.
 
+**Week 7 – Hybrid Switching Optimization:**  
+Introduced dynamic switching between exploration, Bayesian optimisation, and local refinement.
+
+**Week 8 – LLM-Aware Optimisation:**  
+Added instability-sensitive scoring, boundary penalties, similarity control, and selective late-stage exploration.
+
+**Week 9 – Scaling and Emergence-Aware Optimisation:**  
+Added emergence scoring, ruggedness estimation, dimension-aware scaling pressure, hedge-based candidate generation, and high-dimensional fast GP fallback.
+
 ### Methods and Architecture Integration
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -207,6 +226,7 @@ Implemented sophisticated parameter tuning and convergence analysis. Advanced ac
 - **Per-Function Tuning**: ξ (explore/exploit balance) and β (UCB weighting)
 - **Progressive Visualization**: Week-by-week historical analysis system
 - **Automated Data Management**: Robust loading with format auto-detection
+- **Emergence Diagnostics**: Regime-shift and surface-ruggedness detection
 
 ## Configuration and Extensibility
 
@@ -214,6 +234,7 @@ The system supports configuration through:
 - **Function-specific parameters**: Exploration/exploitation balance (ξ, β)
 - **Model selection**: Kernel types and hyperparameter bounds
 - **Visualization options**: Chart types and analysis depth
+- **Strategy controls**: Instability thresholds, emergence weights, and scaling-pressure settings
 - **Data format handling**: Input/output format specifications
 
 This architecture enables efficient black-box optimization with comprehensive tracking and analysis capabilities.
@@ -247,14 +268,16 @@ bbo_capstone_matrix_weekly_project/
 │
 ├── artifacts/
 │   ├── visualizations/                # Complete campaign analysis
-│   └── progressive_visualizations/    # Week-by-week historical graphs
-│       ├── week1/                     # Week 1 cumulative view
-│       ├── week2/                     # Week 2 cumulative view
-│       ├── ...                        # Progressive weekly analysis
-│       └── README.md                  # Visualization guide
+│   ├── progressive_visualizations/    # Week-by-week historical graphs
+│   │   ├── week1/                     # Week 1 cumulative view
+│   │   ├── week2/                     # Week 2 cumulative view
+│   │   ├── ...                        # Progressive weekly analysis
+│   │   └── README.md                  # Visualization guide
+│   └── submissions/                   # Portal-ready queries
 │
 ├── docs/
-│   └── architecture.md                # Technical documentation
+│   ├── architecture.md                # Technical documentation
+│   └── cnn_integration_guide.md       # CNN integration documentation
 │
 ├── requirements.txt
 └── README.md
@@ -267,12 +290,14 @@ bbo_capstone_matrix_weekly_project/
 **config.py** - Configuration Management
 - Function-specific parameters (ξ, β tuning)
 - Model selection settings (kernel types, hyperparameter bounds)
+- Week 8 and Week 9 strategy thresholds and penalties
 - Visualization and analysis options
 - Data format specifications
 
 **data_loader.py** - Robust Data Loading
 - Auto-format detection for multiple input formats
 - Line wrapping detection and correction
+- Safe parsing for array-style and `np.float64(...)` rows
 - Week numbering validation and consistency checks
 - Historical data validation pipeline
 
@@ -281,16 +306,20 @@ bbo_capstone_matrix_weekly_project/
 - Automatic kernel selection (RBF and Matérn)
 - Hyperparameter optimization with bounds
 - Predictive uncertainty quantification
+- Hedge candidate generation and ruggedness penalties
+- Fast GP fitting path for high-dimensional late-stage cases
 
 **strategy.py** - Acquisition Strategies
 - Expected Improvement acquisition function
 - Exploration vs exploitation balance (ξ parameter)
 - Upper Confidence Bound weighting (β parameter)
-- Per-function strategy tuning
+- Instability, emergence, and ruggedness diagnostics
+- Per-function strategy tuning and hedge switching
 
 **pipeline.py** - Main Optimization Pipeline
 - Orchestrates data loading, model training, and query generation
 - Handles per-function optimization loops
+- Computes emergence and scaling metadata before model scoring
 - Manages historical data updates and preservation
 - Integrates visualization and progress tracking
 
@@ -332,6 +361,7 @@ bbo_capstone_matrix_weekly_project/
 - Historical campaign data in text format
 - `inputs.txt` - Portal token submissions (matrix format)
 - `outputs.txt` - Function evaluation results (matrix format)
+- Supports plain float rows, arrays, and NumPy scalar encodings
 - Each row represents a week's queries across all 8 functions
 
 **Historical Tracking (`history/`)**
@@ -354,6 +384,11 @@ bbo_capstone_matrix_weekly_project/
 - Progressive analysis with consistent formatting
 - Enables detailed campaign evolution tracking
 
+**Submissions (`artifacts/submissions/`)**
+- Portal-ready weekly query files
+- Six-decimal token formatting for all functions
+- Supports reproducible handoff to the capstone portal
+
 ## Technical Implementation Details
 
 ### Gaussian Process Architecture
@@ -362,6 +397,7 @@ bbo_capstone_matrix_weekly_project/
 - **Kernel Selection**: Automatic RBF/Matérn kernel comparison
 - **Hyperparameter Tuning**: Bounded optimization with validation
 - **Scalability**: Efficient handling of increasing dimensionality
+- **Fast Mode Support**: Reduced restart path for high-dimensional late-stage optimisation
 
 ### Acquisition Function Framework
 
@@ -369,11 +405,13 @@ bbo_capstone_matrix_weekly_project/
 - **Exploration Control**: ξ parameter for exploration/exploitation balance
 - **Uncertainty Weighting**: β parameter for confidence-based decisions
 - **Per-Function Tuning**: Independent parameter optimization
+- **Hedge Switching**: Blends local and global candidate generation when risk increases
 
 ### Data Processing Pipeline
 
 - **Format Auto-Detection**: Handles multiple input format variations
 - **Line Wrapping Recovery**: Automatically fixes data formatting issues
+- **Scalar Payload Parsing**: Correctly extracts values from `np.float64(...)` wrappers
 - **Validation Framework**: Ensures data consistency and completeness
 - **Historical Integrity**: Maintains campaign data across weekly updates
 

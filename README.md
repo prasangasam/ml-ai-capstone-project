@@ -31,11 +31,13 @@ Each **row** corresponds to a week (week1..weekN) and contains values for **all 
 
 - Space or comma separated: `0.123456-0.654321, 0.111111-0.222222, ...`
 - With week index: `1 0.123456-0.654321 0.111111-0.222222 ...`
+- Python-style array rows: `[array([0.123456, 0.654321]), ...]`
 
 **weekly_outputs.txt** - Function evaluation results:
 
 - Float values: `1.23, -0.04, ...` (8 total)
 - With week index: `1 1.23 -0.04 ...` (8 total)
+- NumPy-style scalar rows: `[np.float64(1.23), np.float64(-0.04), ...]`
 
 > The system automatically handles line wrapping and format variations for robust data loading.
 
@@ -85,7 +87,7 @@ Local refinement (greedy optimisation near best points)
 
 An acquisition function portfolio (EI, PI, UCB) improves robustness, while late-stage optimisation focuses on local refinement to accelerate convergence.
 
-**Week 8 – LLM-Aware Optimisation :**
+**Week 8 – LLM-Aware Optimisation:**
 With 17 data points available, the optimisation strategy is further extended to incorporate **LLM-centred considerations**, reflecting real-world behaviours such as tokenisation effects, prompt sensitivity, decoding variability, and attention limits.
 
 At this stage, the optimisation landscape is treated as **partially non-smooth**, where small input changes can lead to disproportionate output variation. As a result, the framework shifts toward **controlled exploitation with targeted exploration**.
@@ -107,7 +109,32 @@ The system now introduces:
 - **Variance-Aware Uncertainty Boosting:**
   The uncertainty term (σ) is dynamically increased for unstable regions, ensuring continued exploration where the response surface is unreliable.
 
-This enhancement aligns the optimisation process with real-world ML systems, where uncertainty persists even with increasing data, and robustness must be prioritised alongside performance.
+**Week 9 – Scaling and Emergence-Aware Optimisation:**
+With 18 data points now available, the optimisation strategy extends the Week 8 LLM-aware framework by incorporating **scaling pressure** and **emergent behaviour detection** into the query-selection logic.
+
+At this stage, the main question is no longer only whether a region looks promising, but whether recent gains are reliable, transferable across dimensions, and robust to abrupt regime changes. The system therefore moves to a **scaling-aware hedge strategy** that balances local refinement with uncertainty-seeking behaviour when the response surface becomes unstable or unexpectedly shifts.
+
+The system now introduces:
+
+- **Emergence Scoring:**
+  A z-score style emergence metric compares the latest observation against prior behaviour, helping identify sudden qualitative shifts in the optimisation landscape.
+
+- **Ruggedness Detection:**
+  Recent second-order output changes are monitored to estimate surface roughness, reducing the chance of overcommitting to brittle local spikes.
+
+- **Dimension-Aware Scaling Pressure:**
+  Higher-dimensional functions receive an adaptive uncertainty bonus so the optimiser does not become overconfident when sample density remains low relative to dimensionality.
+
+- **Hedge Strategy Between BO and Refinement:**
+  When instability, emergence, or scaling pressure rises, the pipeline switches from pure local refinement to a mixed candidate-generation mode combining local and global search.
+
+- **Fast GP Fallback for High-Dimensional Late Stage:**
+  For the largest functions in the later rounds, the Gaussian Process fitting path uses a lighter configuration to preserve robustness and runtime while still producing actionable uncertainty estimates.
+
+- **Parser Hardening for Weekly Outputs:**
+  The weekly loader now correctly reads `np.float64(...)` output rows without accidentally extracting spurious values, ensuring that the optimisation logic operates on the true historical feedback.
+
+This enhancement aligns the optimisation process with real-world ML systems, where more data can reveal qualitatively new behaviour rather than simply reducing uncertainty.
 
 ### Methods and Architecture
 
@@ -119,6 +146,8 @@ This enhancement aligns the optimisation process with real-world ML systems, whe
 - **CNN-Enhanced Optimization**: Deep learning surrogate models and landscape modeling
 - **Advanced Parameter Tuning**: Sophisticated convergence analysis and adaptive exploration
 - **Multi-Objective Portfolio Balancing**: Intelligent resource allocation across functions
+- **Emergence Diagnostics**: Regime-shift detection and strategy switching metadata
+- **Scaling-Aware Candidate Search**: Dimension-sensitive uncertainty and hedge-based query generation
 
 ---
 
@@ -164,10 +193,12 @@ python scripts/progressive_visualize.py
 - **artifacts/progressive_visualizations/**: Historical progression showing how optimization looked at each week
   - `week1/`: Cumulative view through Week 1
   - `week2/`: Cumulative view through Week 2
-  - `week5/`: Cumulative view through Week 5\n
+  - `week5/`: Cumulative view through Week 5
   - `week6/`: Advanced optimization and refinement analysis
   - `week7/`: Hybrid switching optimization analysis
   - `week8/`: LLM-Aware Optimisation
+  - `week9/`: Scaling and Emergence-Aware Optimisation
+- **artifacts/submissions/**: Portal-ready weekly query files
 
 Each week folder contains:
 
@@ -183,13 +214,14 @@ Each week folder contains:
 ### Robust Data Management
 
 - Automatic line-wrapping detection and correction
-- Multiple input format support (portal tokens, arrays)
+- Multiple input format support (portal tokens, arrays, NumPy scalar rows)
 - Week numbering validation and consistency checks
+- Safe parsing for `np.float64(...)` output records
 
 ### Advanced Optimization Features
 
+- **Week 9 Scaling and Emergence-Aware Enhancements**: Emergence scoring, ruggedness penalties, dimension-aware scaling pressure, and hedge-based strategy switching
 - **Week 8 LLM-Aware Optimisation Enhancements**: Instability-aware acquisition, similarity penalties, and boundary control mechanisms reflecting tokenisation effects and prompt sensitivity
-
 - **Week 6 Sophisticated Parameter Tuning**: Adaptive exploration with convergence analysis
 - **Multi-Objective Portfolio Balancing**: Intelligent resource allocation across function portfolios
 - **Enhanced Uncertainty Quantification**: Robust decision-making with uncertainty boosting
@@ -210,6 +242,7 @@ Each week folder contains:
 - Cumulative progress tracking with consistent scaling
 - Change detection and improvement analysis
 - Advanced convergence monitoring and stability scoring
+- Emergence and scaling diagnostics captured in pipeline reports
 
 ### Modern ML Integration
 
@@ -227,9 +260,9 @@ Each week folder contains:
 
 ---
 
-This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, and Week 8 LLM-aware optimisation enhancements.
+This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, Week 8 LLM-aware optimisation enhancements, and Week 9 scaling and emergence-aware optimisation updates.
 
-The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, and attention limitations into the optimisation framework.
+The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, attention limitations, scaling pressure, and emergent regime shifts into the optimisation framework.
 
 ## Additional Resources
 
