@@ -47,7 +47,7 @@ flowchart TD
         C[outputs.txt<br/>Function Results] --> B
         D[Initial Data<br/>NPY Files] --> B
         B --> E[Data Validation &<br/>Line Wrapping Fix]
-        E --> E2[NumPy Scalar Parsing: np.float64(...)]
+        E --> E2[NumPy Scalar<br/>Parsing]
     end
 
     subgraph "Model Training"
@@ -111,7 +111,7 @@ graph LR
 
 ```mermaid
 sequenceDiagram
-    participant U as User/Portal
+    participant U as User Portal
     participant P as Pipeline
     participant D as Data Loader
     participant GP as Gaussian Process
@@ -143,28 +143,28 @@ sequenceDiagram
 ```mermaid
 graph TD
     subgraph "Repository Structure"
-        A[Root Directory] --> B[scripts/]
-        A --> C[src/bbo/]
-        A --> D[data/]
-        A --> E[artifacts/]
-        A --> F[docs/]
-        A --> G[history/]
+        A[Root Directory] --> B[scripts]
+        A --> C[src bbo]
+        A --> D[data]
+        A --> E[artifacts]
+        A --> F[docs]
+        A --> G[history]
     end
 
     subgraph "Data Directory"
-        D --> H[initial_data/<br/>function_1..8/]
-        D --> I[weekly/<br/>inputs.txt, outputs.txt]
+        D --> H[initial_data<br/>function_1 to 8]
+        D --> I[weekly<br/>inputs.txt outputs.txt]
         H --> J[initial_inputs.npy<br/>initial_outputs.npy]
     end
 
     subgraph "Artifacts Generation"
-        E --> K[visualizations/<br/>Complete Analysis]
-        E --> L[progressive_visualizations/<br/>week1/, week2/, ...]
-        E --> M[submissions/<br/>week_XX_queries.txt]
+        E --> K[visualizations<br/>Complete Analysis]
+        E --> L[progressive_visualizations<br/>week1 week2 etc]
+        E --> M[submissions<br/>weekly queries]
     end
 
     subgraph "Historical Tracking"
-        G --> N[week_XX_to_week_YY.json<br/>Transition Records]
+        G --> N[weekly transitions<br/>JSON Records]
     end
 ```
 
