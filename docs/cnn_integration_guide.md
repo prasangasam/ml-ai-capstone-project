@@ -62,36 +62,40 @@ else:
     print(f"Function {i}: Using GP model")
 ```
 
-### Option 3: Week 6 Integration (Advanced Users)
+### Option 3: Week 9 Integration (Advanced Users)
 
-Combine CNN with existing Week 6 advanced features:
+Combine CNN with the current Week 8 and Week 9 strategy controls:
 
 ```python
-# Enhanced Week 6 optimization with CNN
-from bbo.strategy import adaptive_exploration_params
+from bbo.strategy import adaptive_exploration_params, choose_strategy, recent_instability, emergence_score
 from bbo.cnn_integration import HybridCNNGPOptimizer
 
-def week6_cnn_optimization(funcs, week_k=6):
+
+def week9_cnn_optimization(funcs, week_k=9):
     optimizer = HybridCNNGPOptimizer({
         "gp": 0.6,
         "cnn_surrogate": 0.4
     })
-    
+
+    results = []
     for i, f in enumerate(funcs):
-        # Week 6 advanced parameters
-        advanced_params = adaptive_exploration_params(week_k, f.y, i)
-        
-        # CNN-enhanced optimization
+        strategy = choose_strategy(week_k, f.y, dim=f.X.shape[1])
+        advanced_params = adaptive_exploration_params(week_k, f.y, i, dim=f.X.shape[1])
+
         x_next, report = optimizer.propose_hybrid_point(
             f.X, f.y,
-            acquisition="ei",
+            acquisition="ucb" if strategy == "hedge" else "ei",
             xi=advanced_params["xi"],
             beta=advanced_params["beta"],
             func_idx=i
         )
-        
-        print(f"Function {i+1}: {report['ensemble_info']['used_models']}")
-    
+
+        report["instability"] = recent_instability(f.y)
+        report["emergence_score"] = emergence_score(f.y)
+        results.append((x_next, report))
+
+        print(f"Function {i+1}: {strategy} | emergence={report['emergence_score']:.3f}")
+
     return results
 ```
 
@@ -118,6 +122,7 @@ Replace or supplement Gaussian Processes with deep learning-based function appro
 - Large training datasets (25+ evaluations)
 - Non-stationary or complex function landscapes
 - When GP kernel assumptions may not hold
+- As an ensemble complement when emergence or scaling pressure is high
 
 ### Basic Usage Example
 
@@ -159,6 +164,7 @@ python -c "import torch; print('PyTorch version:', torch.__version__)"
 ```python
 # Test CNN with your existing data
 import numpy as np
+from pathlib import Path
 from bbo.cnn_surrogate import CNNBayesianOptimizer
 
 # Load your actual function data
@@ -225,7 +231,7 @@ from bbo.cnn_integration import HybridCNNGPOptimizer
 
 # Create ensemble optimizer
 optimizer = HybridCNNGPOptimizer({
-    "gp": 0.7,           # 70% weight to GP
+    "gp": 0.7,             # 70% weight to GP
     "cnn_surrogate": 0.3  # 30% weight to CNN
 })
 
@@ -237,7 +243,7 @@ for i, f in enumerate(funcs):
         xi=xi, beta=beta,
         func_idx=i
     )
-    
+
     print(f"Function {i}: Models used: {report['ensemble_info']['used_models']}")
 ```
 
@@ -249,7 +255,7 @@ Use CNN only when conditions are met:
 def choose_optimization_method(X, y, func_idx):
     dim = X.shape[1]
     n_points = len(y)
-    
+
     # Decision logic
     if dim >= 4 and n_points >= 25:
         return "cnn_surrogate"
@@ -257,188 +263,23 @@ def choose_optimization_method(X, y, func_idx):
         return "cnn_landscape"  # For 2D visualization
     else:
         return "gp"  # Default fallback
-
-# In your optimization loop:
-method = choose_optimization_method(f.X, f.y, i)
-
-if method == "cnn_surrogate":
-    x_next, report = propose_next_point_cnn(f.X, f.y, ...)
-elif method == "gp":
-    x_next, report = propose_next_point(f.X, f.y, ...)
 ```
 
-## 4. Practical Examples
+## 4. Recommended Usage with the Current Repository
 
-### Example 1: Modify Existing run_week.py
+The current repository centres on Gaussian Processes, with Week 8 and Week 9 enhancements focused on instability handling, emergence detection, ruggedness control, and dimension-aware strategy switching. Within that design, CNN integration is most useful in the following roles:
 
-Create a CNN-enhanced version:
+- **High-dimensional surrogate support:** Use CNN models when function dimensionality is high and historical data volume begins to exceed the comfortable range for standard GP fitting.
+- **Ensemble robustness:** Blend CNN and GP predictions when the latest observations suggest emergent behaviour or a rugged response surface.
+- **Post-hoc landscape analysis:** Use CNN-based models to inspect candidate regions discovered by the hedge strategy rather than replacing the main weekly submission pipeline immediately.
+- **Experimental comparison:** Benchmark CNN-guided points against GP-guided points on the same historical dataset before promoting the CNN path into the main capstone submission workflow.
 
-```python
-#!/usr/bin/env python3
-"""Enhanced run_week.py with CNN integration"""
+## 5. Practical Notes
 
-from pathlib import Path
-import argparse
-from bbo.cnn_integration import run_cnn_enhanced_optimization
+- The Week 9 pipeline already includes a fast GP fallback for the most demanding late-stage cases, so CNN integration should be treated as an optional enhancement rather than a required replacement.
+- If weekly outputs are stored as NumPy scalar wrappers such as `np.float64(...)`, the hardened data loader will normalise them before training either GP or CNN models.
+- For reproducible capstone submissions, keep the final portal formatting step inside the existing `io.py` and pipeline workflow even if candidate generation is delegated to CNN utilities.
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--initial_dir', type=Path, required=True)
-    parser.add_argument('--weekly_dir', type=Path, required=True)
-    parser.add_argument('--use_cnn', action='store_true', help='Enable CNN enhancement')
-    parser.add_argument('--cnn_weight', type=float, default=0.3, help='CNN ensemble weight')
-    
-    args = parser.parse_args()
-    
-    if args.use_cnn:
-        # CNN-enhanced optimization
-        ensemble_weights = {
-            "gp": 1.0 - args.cnn_weight,
-            "cnn_surrogate": args.cnn_weight
-        }
-        
-        result = run_cnn_enhanced_optimization(
-            initial_dir=args.initial_dir,
-            weekly_dir=args.weekly_dir,
-            use_hybrid=True,
-            cnn_ensemble_weights=ensemble_weights
-        )
-        
-        print(f"🤖 CNN-Enhanced Week {result['week_k']} completed")
-        print(f"📊 Models used: {result['diagnostics_summary']['unique_models']}")
-    else:
-        # Standard optimization (your existing code)
-        from bbo.pipeline import run
-        result = run(initial_dir=args.initial_dir, weekly_dir=args.weekly_dir)
-        print(f"📊 Standard Week {result['week_k']} completed")
-    
-    print(f"💾 Results saved to: {result['submission_path']}")
+---
 
-if __name__ == "__main__":
-    main()
-```
-
-Usage:
-```bash
-# Standard optimization
-python scripts/run_week_enhanced.py --initial_dir data/initial_data --weekly_dir data/weekly
-
-# CNN-enhanced optimization  
-python scripts/run_week_enhanced.py --initial_dir data/initial_data --weekly_dir data/weekly --use_cnn --cnn_weight 0.4
-```
-
-### Example 2: Function-Specific CNN Usage
-
-Customize CNN usage per function:
-
-```python
-# Configure CNN usage per function
-CNN_CONFIG = {
-    1: {"use_cnn": False, "reason": "2D function, GP sufficient"},
-    2: {"use_cnn": False, "reason": "2D function, GP sufficient"}, 
-    3: {"use_cnn": False, "reason": "3D function, GP sufficient"},
-    4: {"use_cnn": True, "reason": "4D function, CNN beneficial"},
-    5: {"use_cnn": True, "reason": "4D function, CNN beneficial"},
-    6: {"use_cnn": True, "reason": "5D function, CNN beneficial"},
-    7: {"use_cnn": True, "reason": "6D function, CNN beneficial"},
-    8: {"use_cnn": True, "reason": "8D function, CNN optimal"},
-}
-
-# In your optimization loop:
-for i, f in enumerate(funcs, start=1):
-    config = CNN_CONFIG[i]
-    
-    if config["use_cnn"] and len(f.y) >= 25:
-        # Use CNN for high-dimensional functions with sufficient data
-        x_next, report = propose_next_point_cnn(f.X, f.y, ...)
-        print(f"Function {i}: CNN - {config['reason']}")
-    else:
-        # Use standard GP
-        x_next, report = propose_next_point(f.X, f.y, ...)
-        print(f"Function {i}: GP - {config['reason']}")
-```
-
-## 5. Monitoring and Debugging
-
-### Performance Comparison
-
-```python
-# Compare GP vs CNN performance
-def compare_methods(X, y):
-    from bbo.gp import propose_next_point
-    from bbo.cnn_surrogate import propose_next_point_cnn
-    import time
-    
-    # Test GP
-    start = time.time()
-    x_gp, report_gp = propose_next_point(X, y, acquisition="ei", xi=0.01, beta=1.0, seed=42, n_candidates=1000)
-    gp_time = time.time() - start
-    
-    # Test CNN
-    start = time.time()
-    x_cnn, report_cnn = propose_next_point_cnn(X, y, acquisition="ei", xi=0.01, seed=42, n_candidates=1000)
-    cnn_time = time.time() - start
-    
-    print(f"GP Time: {gp_time:.2f}s, CNN Time: {cnn_time:.2f}s")
-    print(f"GP Point: {x_gp}, CNN Point: {x_cnn}")
-    
-    return {"gp": (x_gp, report_gp, gp_time), "cnn": (x_cnn, report_cnn, cnn_time)}
-```
-
-### Error Handling
-
-```python
-# Robust CNN integration with fallback
-def optimize_with_cnn_fallback(X, y, **kwargs):
-    try:
-        # Try CNN first
-        x_next, report = propose_next_point_cnn(X, y, **kwargs)
-        report["method_used"] = "cnn_surrogate"
-        return x_next, report
-        
-    except Exception as e:
-        print(f"⚠️ CNN optimization failed: {e}")
-        print("🔄 Falling back to GP optimization...")
-        
-        # Fallback to GP
-        x_next, report = propose_next_point(X, y, **kwargs)
-        report["method_used"] = "gp_fallback"
-        report["cnn_error"] = str(e)
-        return x_next, report
-```
-
-## 6. Best Practices
-
-### When to Use CNN vs GP
-
-| Condition | Recommendation | Reason |
-|-----------|---------------|---------|
-| 2D-3D functions | Use GP | GP excellent for low dimensions |
-| 4D+ functions with 25+ points | Use CNN | CNN scales better to high dimensions |
-| Less than 20 evaluations | Use GP | CNN needs more training data |
-| Week 1-3 | Use GP | Build initial dataset first |
-| Week 4+ | Consider CNN | Sufficient data for CNN training |
-| Week 6+ | Use hybrid | Combine advanced features |
-
-### Performance Tips
-
-```python
-# Optimize CNN training for your use case
-cnn_opt = CNNBayesianOptimizer(input_dim=dim)
-
-# For faster training (testing)
-cnn_opt.config.epochs = 20
-cnn_opt.config.learning_rate = 0.01
-
-# For better accuracy (production)
-cnn_opt.config.epochs = 100
-cnn_opt.config.learning_rate = 0.001
-cnn_opt.config.uncertainty_samples = 100  # More uncertainty samples
-
-# Train once, use many times
-fit_info = cnn_opt.fit(X, y)
-mu1, sigma1 = cnn_opt.predict_with_mc_uncertainty(X_test1)
-mu2, sigma2 = cnn_opt.predict_with_mc_uncertainty(X_test2)
-```
-
-**Start with Option 1 (replace standard pipeline) for easiest integration, then experiment with Options 2-3 for more control over the CNN usage in your specific BBO problem.**
+This guide preserves the existing project style while aligning CNN usage recommendations with the current Week 9 scaling and emergence-aware optimisation framework.

@@ -18,9 +18,11 @@ from .strategy import (
     tune_params,
     is_stagnating,
     recent_instability,
+    emergence_score,
+    ruggedness_score,
+    dimension_scaling_pressure,
 )
 
-# CNN integration (optional)
 try:
     from .cnn_surrogate import propose_next_point_cnn
     CNN_AVAILABLE = True
@@ -40,13 +42,10 @@ class FunctionDataset:
 
 
 def should_use_cnn(dim: int, n_points: int, week_k: Optional[int] = None, force_cnn: bool = False):
-    """Determine if CNN should be used for optimization."""
     if not CNN_AVAILABLE:
         return False, "CNN not available"
-
     if force_cnn:
         return True, "CNN forced by user"
-
     if dim >= 4 and n_points >= 25:
         return True, f"{dim}D function with {n_points} points"
     if week_k and week_k >= 4 and dim >= 3 and n_points >= 20:
@@ -98,13 +97,17 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
         base_mode = decide_mode_maximise(y_last, f.y)
         stagnating = is_stagnating(f.y)
         instability = recent_instability(f.y)
-        strategy = choose_strategy(week_k, f.y)
+        emergence = emergence_score(f.y)
+        ruggedness = ruggedness_score(f.y)
+        scale_pressure = dimension_scaling_pressure(f.X.shape[1], len(f.y))
+        strategy = choose_strategy(week_k, f.y, dim=f.X.shape[1])
         acquisition_name = choose_acquisition(
             week_k,
             stagnating=stagnating,
             instability=instability,
             strategy=strategy,
             default=config.ACQUISITION,
+            emergence=emergence,
         )
 
         tuned = tune_params(
@@ -113,6 +116,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
             week=week_k,
             y_hist=f.y,
             func_idx=func_idx,
+            dim=f.X.shape[1],
         )
 
         portfolio_weight = float(portfolio_weights.get(func_idx, 1.0))
@@ -122,6 +126,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
             strategy=strategy,
             instability=instability,
             n_observations=len(f.y),
+            emergence=emergence,
         )
 
         use_cnn_for_func = False
@@ -149,6 +154,9 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                 report["strategy"] = strategy
                 report["acquisition_used"] = acquisition_name
                 report["instability"] = float(instability)
+                report["emergence_score"] = float(emergence)
+                report["ruggedness_score"] = float(ruggedness)
+                report["dimension_scaling_pressure"] = float(scale_pressure)
             except Exception as e:
                 x_next, report = propose_next_point(
                     f.X,
@@ -160,6 +168,9 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                     n_candidates=config.N_CANDIDATES,
                     strategy=strategy,
                     instability=instability,
+                    emergence_score=emergence,
+                    ruggedness_score=ruggedness,
+                    dimension_scaling_pressure=scale_pressure,
                 )
                 report["method_used"] = "gp_fallback"
                 report["cnn_error"] = str(e)
@@ -175,6 +186,9 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                 n_candidates=config.N_CANDIDATES,
                 strategy=strategy,
                 instability=instability,
+                emergence_score=emergence,
+                ruggedness_score=ruggedness,
+                dimension_scaling_pressure=scale_pressure,
             )
             report["method_used"] = "gp"
             report["method_reason"] = method_reason
@@ -187,6 +201,9 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
             "strategy": strategy,
             "stagnating": stagnating,
             "instability": float(instability),
+            "emergence_score": float(emergence),
+            "ruggedness_score": float(ruggedness),
+            "dimension_scaling_pressure": float(scale_pressure),
             "portfolio_weight": portfolio_weight,
             "xi": acq_params["xi"],
             "beta": acq_params["beta"],
