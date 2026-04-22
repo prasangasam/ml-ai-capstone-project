@@ -136,6 +136,19 @@ The system now introduces:
 
 This enhancement aligns the optimisation process with real-world ML systems, where more data can reveal qualitatively new behaviour rather than simply reducing uncertainty.
 
+**Week 10 – Recovery-Aware Trust-Region Optimisation:**  
+With Week 9 results now available, the strategy is extended to explicitly detect **late-stage drawdowns** and recover from brittle over-exploitation. Instead of assuming the most recent region remains trustworthy, the optimiser now measures whether performance has fallen sharply from a recent peak and reacts by shifting toward a trust-region recovery mode.
+
+The Week 10 update introduces:
+
+- **Drawdown Detection:** Quantifies how far the latest observation has fallen from recent best performance.
+- **Recovery Strategy:** If a function shows a strong late-stage drop, candidate generation centres on both the best historical point and the centroid of top-performing points rather than only the latest sample.
+- **Trust-Region Scaling:** Local search radius is tightened or loosened according to dimensionality, strategy, and drawdown severity.
+- **Consensus Bonus:** Candidates closer to the top-performing cluster receive a score bonus, improving stability when the landscape is noisy.
+- **Last-Point Repulsion After Collapse:** When the latest query underperforms badly, the optimiser penalises points too close to that last location to avoid re-sampling a failing pocket.
+
+This makes the Week 10 search more robust in functions where Week 9 revealed regressions after earlier gains.
+
 ### Methods and Architecture
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -198,6 +211,7 @@ python scripts/progressive_visualize.py
   - `week7/`: Hybrid switching optimization analysis
   - `week8/`: LLM-Aware Optimisation
   - `week9/`: Scaling and Emergence-Aware Optimisation
+  - `week10/`: Recovery-Aware Trust-Region Optimisation
 - **artifacts/submissions/**: Portal-ready weekly query files
 
 Each week folder contains:
@@ -263,6 +277,11 @@ Each week folder contains:
 This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, Week 8 LLM-aware optimisation enhancements, and Week 9 scaling and emergence-aware optimisation updates.
 
 The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, attention limitations, scaling pressure, and emergent regime shifts into the optimisation framework.
+
+## Documentation
+
+- [Datasheet](docs/datasheet.md)
+- [Model Card](docs/model_card.md)
 
 ## Additional Resources
 
