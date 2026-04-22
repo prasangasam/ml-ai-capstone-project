@@ -75,6 +75,27 @@ def ruggedness_score(y_hist: np.ndarray, window: int = config.W9_RUGGEDNESS_WIND
     return float(np.mean(np.abs(second_diff)) / denom)
 
 
+def drawdown_ratio(y_hist: np.ndarray, window: int = config.W10_DRAWDOWN_WINDOW) -> float:
+    y_hist = np.asarray(y_hist, float).reshape(-1)
+    if y_hist.size < 2:
+        return 0.0
+    lookback = y_hist[-window:] if y_hist.size >= window else y_hist
+    best_recent = float(np.max(lookback))
+    worst_recent = float(np.min(lookback))
+    span = max(best_recent - worst_recent, 1e-12)
+    return float(np.clip((best_recent - float(y_hist[-1])) / span, 0.0, 1.0))
+
+
+def recent_trend_score(y_hist: np.ndarray, window: int = config.W10_RECENT_TREND_WINDOW) -> float:
+    y_hist = np.asarray(y_hist, float).reshape(-1)
+    if y_hist.size < 3:
+        return 0.0
+    recent = y_hist[-window:] if y_hist.size >= window else y_hist
+    if recent.size < 2:
+        return 0.0
+    return float(np.mean(np.diff(recent)))
+
+
 def dimension_scaling_pressure(dim: int, n_observations: int) -> float:
     if dim < config.W9_DIMENSION_SCALE_TRIGGER:
         return 0.0
@@ -87,6 +108,8 @@ def dimension_scaling_pressure(dim: int, n_observations: int) -> float:
 def choose_strategy(week: int, y_hist: np.ndarray, *, dim: Optional[int] = None) -> str:
     instability = recent_instability(y_hist)
     emergence = emergence_score(y_hist)
+    drawdown = drawdown_ratio(y_hist)
+    trend = recent_trend_score(y_hist)
     n_obs = len(np.asarray(y_hist).reshape(-1))
     scaling_pressure = dimension_scaling_pressure(dim or 0, n_obs)
 
@@ -96,6 +119,11 @@ def choose_strategy(week: int, y_hist: np.ndarray, *, dim: Optional[int] = None)
         return "bo"
     if is_stagnating(y_hist):
         return "explore"
+    if n_obs >= config.LATE_STAGE_MIN_POINTS and (
+        drawdown >= config.W10_DRAWDOWN_TRIGGER
+        or trend <= config.W10_RECENT_TREND_TRIGGER
+    ):
+        return "recover"
     if instability >= config.W8_INSTABILITY_THRESHOLD or scaling_pressure > 0.18:
         return "hedge"
     if n_obs >= config.LATE_STAGE_MIN_POINTS and abs(emergence) >= config.W9_EMERGENCE_Z_THRESHOLD:
@@ -114,6 +142,8 @@ def choose_acquisition(
     default: Optional[str] = None,
     emergence: float = 0.0,
 ) -> str:
+    if strategy and strategy.lower().strip() == "recover":
+        return "ei"
     if stagnating or instability >= config.W8_INSTABILITY_THRESHOLD:
         return "ucb"
     if abs(emergence) >= config.W9_EMERGENCE_Z_THRESHOLD and strategy == "hedge":
@@ -136,6 +166,8 @@ def adaptive_exploration_params(week: int, y_hist: np.ndarray, func_idx: int, di
     emergence = emergence_score(y_hist)
     ruggedness = ruggedness_score(y_hist)
     scaling_pressure = dimension_scaling_pressure(dim or 0, len(np.asarray(y_hist).reshape(-1)))
+    drawdown = drawdown_ratio(y_hist)
+    trend = recent_trend_score(y_hist)
 
     late_stage_multiplier = 0.65 if len(np.asarray(y_hist).reshape(-1)) >= config.LATE_STAGE_MIN_POINTS else 1.0
     base_exploration = config.XI_EXPLORE * (config.ADAPTIVE_EXPLORATION_RATE ** week) * late_stage_multiplier
@@ -145,8 +177,13 @@ def adaptive_exploration_params(week: int, y_hist: np.ndarray, func_idx: int, di
     uncertainty_factor *= (1.0 + config.W8_SIGMA_BOOST * instability)
     uncertainty_factor *= (1.0 + max(0.0, abs(emergence) - config.W9_EMERGENCE_Z_THRESHOLD) * config.W9_EMERGENCE_WEIGHT)
     uncertainty_factor *= (1.0 + scaling_pressure)
+    uncertainty_factor *= (1.0 + drawdown)
 
-    if convergence_info["improvement_trend"] < config.MIN_IMPROVEMENT_THRESHOLD:
+    if drawdown >= config.W10_DRAWDOWN_TRIGGER or trend <= config.W10_RECENT_TREND_TRIGGER:
+        xi_adaptive = base_exploration * 1.2 * uncertainty_factor
+        beta_adaptive = config.BETA_EXPLORE * func_weight * max(1.0, uncertainty_factor)
+        mode = "adaptive_recover"
+    elif convergence_info["improvement_trend"] < config.MIN_IMPROVEMENT_THRESHOLD:
         xi_adaptive = base_exploration * 1.5 * uncertainty_factor
         beta_adaptive = config.BETA_EXPLORE * func_weight * uncertainty_factor
         mode = "adaptive_explore"
@@ -169,6 +206,8 @@ def adaptive_exploration_params(week: int, y_hist: np.ndarray, func_idx: int, di
         "emergence_score": float(emergence),
         "ruggedness_score": float(ruggedness),
         "dimension_scaling_pressure": float(scaling_pressure),
+        "drawdown_ratio": float(drawdown),
+        "recent_trend_score": float(trend),
     }
 
 
@@ -198,7 +237,7 @@ def multi_objective_portfolio_balance(all_func_performances: List[float]) -> Dic
 
 
 def llm_strategy_metadata(*, dim: int, strategy: str, instability: float, n_observations: int, emergence: float = 0.0) -> Dict[str, float | int | str]:
-    stable = instability < config.W8_INSTABILITY_THRESHOLD and strategy == "refine" and abs(emergence) < config.W9_EMERGENCE_Z_THRESHOLD
+    stable = instability < config.W8_INSTABILITY_THRESHOLD and strategy in ("refine", "recover") and abs(emergence) < config.W9_EMERGENCE_Z_THRESHOLD
     prompt_pattern = config.W8_PROMPT_PATTERN_STABLE if stable else config.W8_PROMPT_PATTERN_UNSTABLE
     temperature = config.W8_TEMPERATURE_STABLE if stable else config.W8_TEMPERATURE_UNSTABLE
     token_pressure = "moderate" if dim >= config.W8_TOKEN_PRESSURE_RISK_LONG_DIM else "low"

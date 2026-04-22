@@ -21,6 +21,8 @@ from .strategy import (
     emergence_score,
     ruggedness_score,
     dimension_scaling_pressure,
+    drawdown_ratio,
+    recent_trend_score,
 )
 
 try:
@@ -100,6 +102,8 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
         emergence = emergence_score(f.y)
         ruggedness = ruggedness_score(f.y)
         scale_pressure = dimension_scaling_pressure(f.X.shape[1], len(f.y))
+        drawdown = drawdown_ratio(f.y)
+        trend_score = recent_trend_score(f.y)
         strategy = choose_strategy(week_k, f.y, dim=f.X.shape[1])
         acquisition_name = choose_acquisition(
             week_k,
@@ -171,6 +175,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                     emergence_score=emergence,
                     ruggedness_score=ruggedness,
                     dimension_scaling_pressure=scale_pressure,
+                    drawdown_ratio=drawdown,
                 )
                 report["method_used"] = "gp_fallback"
                 report["cnn_error"] = str(e)
@@ -189,6 +194,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                 emergence_score=emergence,
                 ruggedness_score=ruggedness,
                 dimension_scaling_pressure=scale_pressure,
+                drawdown_ratio=drawdown,
             )
             report["method_used"] = "gp"
             report["method_reason"] = method_reason
@@ -204,6 +210,8 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
             "emergence_score": float(emergence),
             "ruggedness_score": float(ruggedness),
             "dimension_scaling_pressure": float(scale_pressure),
+            "drawdown_ratio": float(drawdown),
+            "recent_trend_score": float(trend_score),
             "portfolio_weight": portfolio_weight,
             "xi": acq_params["xi"],
             "beta": acq_params["beta"],
