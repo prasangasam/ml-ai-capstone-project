@@ -261,9 +261,7 @@ bbo_capstone_matrix_weekly_project/
 │       ├── gp.py                      # Gaussian Process implementation
 │       ├── io.py                      # Input/output utilities
 │       ├── pipeline.py                # Main optimization pipeline
-│       ├── pipeline.py                # Main optimization pipeline
-|       └── strategy.py                # Acquisition strategies
-|
+│       └── strategy.py                # Acquisition strategies
 │
 ├── data/
 │   ├── initial_data/                  # Seed data (NPY format)
