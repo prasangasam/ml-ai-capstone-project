@@ -11,6 +11,23 @@ from . import config
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 
+def _topk_center(X: np.ndarray, y: np.ndarray, dim: int) -> np.ndarray:
+    top_k = config.W10_TOPK_CENTER_LOW_D if dim <= 4 else config.W10_TOPK_CENTER_HIGH_D
+    top_k = max(1, min(top_k, X.shape[0]))
+    idx = np.argsort(y)[-top_k:]
+    return np.mean(np.asarray(X[idx], float), axis=0)
+
+
+def _trust_region_scale(dim: int, strategy: str, drawdown_ratio: float) -> float:
+    base = config.W10_RECOVER_SCALE_LOW_D if dim <= 4 else config.W10_RECOVER_SCALE_HIGH_D
+    scale = base * (1.0 - 0.35 * float(np.clip(drawdown_ratio, 0.0, 1.0)))
+    if strategy == "refine":
+        scale *= config.W10_REFINE_TRUST_SHRINK
+    elif strategy in ("hedge", "bo"):
+        scale *= config.W10_HEDGE_TRUST_EXPAND
+    return float(np.clip(scale, config.W10_TRUST_REGION_MIN, config.W10_TRUST_REGION_MAX))
+
+
 def _acq_ei(mu: np.ndarray, sigma: np.ndarray, y_best: float, xi: float) -> np.ndarray:
     sigma = np.maximum(sigma, 1e-12)
     imp = mu - y_best - xi
@@ -85,17 +102,29 @@ def _build_candidates(
     dim: int,
     n_candidates: int,
     strategy: str,
+    drawdown_ratio: float = 0.0,
 ) -> np.ndarray:
     strategy = strategy.lower().strip()
     if strategy == "explore":
         return rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_candidates, dim))
 
     best_x = np.asarray(X[int(np.argmax(y))], dtype=float)
+    center_x = _topk_center(X, y, dim)
+
+    if strategy == "recover":
+        trust_scale = _trust_region_scale(dim, strategy, drawdown_ratio)
+        n_best = max(1, int(config.W10_RECOVER_BEST_RATIO * n_candidates))
+        n_center = max(1, int(config.W10_RECOVER_CENTER_RATIO * n_candidates))
+        n_global = max(1, n_candidates - n_best - n_center)
+        around_best = np.clip(rng.normal(loc=best_x, scale=trust_scale, size=(n_best, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
+        around_center = np.clip(rng.normal(loc=center_x, scale=trust_scale * 1.15, size=(n_center, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
+        global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
+        return np.vstack([around_best, around_center, global_])
 
     if strategy == "refine":
         n_local = max(1, int(config.W8_LOCAL_CANDIDATE_RATIO * n_candidates))
         n_global = max(1, n_candidates - n_local)
-        local_scale = config.W8_REFINEMENT_SCALE_LOW_D if dim <= 4 else config.W8_REFINEMENT_SCALE_HIGH_D
+        local_scale = _trust_region_scale(dim, strategy, drawdown_ratio)
         local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
         global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
         return np.vstack([local, global_])
@@ -103,14 +132,14 @@ def _build_candidates(
     if strategy == "hedge":
         n_local = max(1, int(config.W8_HEDGE_LOCAL_RATIO * n_candidates))
         n_global = max(1, n_candidates - n_local)
-        local_scale = config.W8_HEDGE_SCALE_LOW_D if dim <= 4 else config.W8_HEDGE_SCALE_HIGH_D
+        local_scale = _trust_region_scale(dim, strategy, drawdown_ratio) * 1.10
         local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
         global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
         return np.vstack([local, global_])
 
     n_local = max(1, int(0.55 * n_candidates))
     n_global = max(1, n_candidates - n_local)
-    local_scale = config.W8_BO_LOCAL_SCALE_LOW_D if dim <= 4 else config.W8_BO_LOCAL_SCALE_HIGH_D
+    local_scale = _trust_region_scale(dim, strategy, drawdown_ratio) * 1.20
     local = np.clip(rng.normal(loc=best_x, scale=local_scale, size=(n_local, dim)), config.W9_MIN_BOUND, config.W9_MAX_BOUND)
     global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
     return np.vstack([local, global_])
@@ -141,6 +170,23 @@ def _ruggedness_penalty(Xcand: np.ndarray, X_hist: np.ndarray, y_hist: np.ndarra
     return np.exp(-nearest / max(0.05 * Xcand.shape[1], 1e-6))
 
 
+
+
+def _consensus_bonus(Xcand: np.ndarray, X_hist: np.ndarray, y_hist: np.ndarray) -> np.ndarray:
+    if X_hist.shape[0] < 3:
+        return np.zeros(Xcand.shape[0], dtype=float)
+    center = _topk_center(X_hist, y_hist, X_hist.shape[1])
+    dist = np.sqrt(((Xcand - center) ** 2).sum(axis=1))
+    scale = max(0.08 * Xcand.shape[1], 1e-6)
+    return np.exp(-dist / scale)
+
+
+def _last_point_repulsion(Xcand: np.ndarray, last_x: np.ndarray, trigger: float) -> np.ndarray:
+    if trigger <= 0.0:
+        return np.zeros(Xcand.shape[0], dtype=float)
+    dist = np.sqrt(((Xcand - last_x.reshape(1, -1)) ** 2).sum(axis=1))
+    return np.clip((config.W10_LAST_POINT_REPULSION_DISTANCE - dist) / config.W10_LAST_POINT_REPULSION_DISTANCE, 0.0, 1.0) * float(trigger)
+
 def propose_next_point(
     X: np.ndarray,
     y: np.ndarray,
@@ -155,12 +201,13 @@ def propose_next_point(
     emergence_score: float = 0.0,
     ruggedness_score: float = 0.0,
     dimension_scaling_pressure: float = 0.0,
+    drawdown_ratio: float = 0.0,
 ):
     rng = np.random.default_rng(seed)
     dim = X.shape[1]
     gp, best_lml, lml_details = fit_best_gp_by_lml(X, y, dim=dim, seed=seed)
 
-    Xcand = _build_candidates(rng, X=X, y=y, dim=dim, n_candidates=n_candidates, strategy=strategy)
+    Xcand = _build_candidates(rng, X=X, y=y, dim=dim, n_candidates=n_candidates, strategy=strategy, drawdown_ratio=drawdown_ratio)
     mu, sigma = gp.predict(Xcand, return_std=True)
     mu = mu.reshape(-1)
     sigma = sigma.reshape(-1)
@@ -181,13 +228,17 @@ def propose_next_point(
     boundary_pen = _boundary_penalty(Xcand)
     repeat_pen = _repeat_penalty(Xcand, X)
     rugged_pen = _ruggedness_penalty(Xcand, X, y)
+    consensus_bonus = _consensus_bonus(Xcand, X, y)
+    last_point_pen = _last_point_repulsion(Xcand, np.asarray(X[-1], float), max(0.0, float(drawdown_ratio) - config.W10_DRAWDOWN_TRIGGER))
     score = (
         raw_score
         + sigma_bonus
         + emergence_bonus
+        + config.W10_CONSENSUS_BONUS_WEIGHT * consensus_bonus
         - config.W8_BOUNDARY_PENALTY_WEIGHT * boundary_pen
         - config.W8_REPEAT_PENALTY_WEIGHT * repeat_pen
         - config.W9_RUGGEDNESS_PENALTY_WEIGHT * float(ruggedness_score) * rugged_pen
+        - config.W10_LAST_POINT_REPULSION_WEIGHT * last_point_pen
     )
 
     idx = int(np.argmax(score))
@@ -203,6 +254,7 @@ def propose_next_point(
         "emergence_score": float(emergence_score),
         "ruggedness_score": float(ruggedness_score),
         "dimension_scaling_pressure": float(dimension_scaling_pressure),
+        "drawdown_ratio": float(drawdown_ratio),
         "raw_score_at_choice": float(raw_score[idx]),
         "adjusted_score_at_choice": float(score[idx]),
         "sigma_bonus_at_choice": float(sigma_bonus[idx]),
@@ -210,5 +262,7 @@ def propose_next_point(
         "boundary_penalty_at_choice": float(boundary_pen[idx]),
         "repeat_penalty_at_choice": float(repeat_pen[idx]),
         "ruggedness_penalty_at_choice": float(rugged_pen[idx]),
+        "consensus_bonus_at_choice": float(consensus_bonus[idx]),
+        "last_point_repulsion_at_choice": float(last_point_pen[idx]),
         "fast_gp_mode": bool(dim >= config.W9_FAST_GP_DIM_THRESHOLD and len(y) >= config.W9_FAST_GP_POINT_THRESHOLD),
     }
