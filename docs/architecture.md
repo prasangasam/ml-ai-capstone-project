@@ -261,7 +261,9 @@ bbo_capstone_matrix_weekly_project/
 │       ├── gp.py                      # Gaussian Process implementation
 │       ├── io.py                      # Input/output utilities
 │       ├── pipeline.py                # Main optimization pipeline
-│       └── strategy.py                # Acquisition strategies
+│       ├── pipeline.py                # Main optimization pipeline
+|       └── strategy.py                # Acquisition strategies
+|
 │
 ├── data/
 │   ├── initial_data/                  # Seed data (NPY format)
@@ -279,9 +281,11 @@ bbo_capstone_matrix_weekly_project/
 │   │   └── README.md                  # Visualization guide
 │   └── submissions/                   # Portal-ready queries
 │
-├── docs/
-│   ├── architecture.md                # Technical documentation
-│   └── cnn_integration_guide.md       # CNN integration documentation
+├── docs/                             # Project documentation
+│   ├── architecture.md               # System architecture (this file)
+│   ├── datasheet.md                  # Dataset documentation (query history + evaluations)
+│   ├── model_card.md                 # Optimisation strategy documentation
+│   └── cnn_integration_guide.md      # Optional extension guide
 │
 ├── requirements.txt
 └── README.md
