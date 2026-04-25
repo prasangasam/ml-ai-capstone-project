@@ -126,6 +126,8 @@ def choose_strategy(week: int, y_hist: np.ndarray, *, dim: Optional[int] = None)
         return "recover"
     if instability >= config.W8_INSTABILITY_THRESHOLD or scaling_pressure > 0.18:
         return "hedge"
+    if n_obs >= config.W11_CLUSTER_MIN_POINTS:
+        return "cluster"
     if n_obs >= config.LATE_STAGE_MIN_POINTS and abs(emergence) >= config.W9_EMERGENCE_Z_THRESHOLD:
         return "hedge"
     if n_obs >= config.LATE_STAGE_MIN_POINTS and instability >= 0.10:
