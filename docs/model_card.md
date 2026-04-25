@@ -1,10 +1,10 @@
-# Model Card: Adaptive Recovery-Based Optimisation Strategy
+# Model Card: Adaptive Cluster-Aware Optimisation Strategy
 
 ## 1. Overview (NAME + TYPE + VERSION)
 
-- Model Name: Adaptive Recovery-Based Optimiser
+- Model Name: Adaptive Cluster-Aware Optimiser
 - Type: Sequential black-box optimisation strategy
-- Version: 1.0
+- Version: 1.1
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## 3. Strategy Details (TECHNIQUES + EVOLUTION)
 
-### Strategy Across 10 Rounds
+### Strategy Across 11 Rounds
 
 **Rounds 1–3 (Exploration):**
 
@@ -43,6 +43,13 @@
 - Introduced recovery mechanism
 - Balanced refinement and correction
 
+**Round 11 (Cluster-Aware Refinement):**
+
+- Identified recurring high-performing regions
+- Used centroid trends to guide local refinement
+- Treated isolated strong or weak points as possible noise
+- Tightened boundaries around promising clusters
+
 ### Techniques Used
 
 - Local refinement (trust-region search)
@@ -50,6 +57,9 @@
 - Recovery from performance drop
 - Avoidance of recent poor points
 - Use of Gaussian Process surrogate model
+- High-performer cluster detection
+- Centroid-guided query selection
+- Noise and outlier filtering
 
 ### Decision Logic
 
@@ -77,6 +87,7 @@ At each round:
 - Strong improvement in early rounds
 - Some instability due to local optima
 - Recovery strategy improved late-stage performance
+- Cluster-aware refinement improved consistency by prioritising recurring promising regions
 - Performance varied by function dimensionality
 
 ---
@@ -88,6 +99,7 @@ At each round:
 - Function landscapes are relatively smooth
 - Historical high-performing regions remain useful
 - Local optimisation leads to improvement
+- Nearby high-performing points are more reliable than isolated one-off results
 
 ### Limitations
 
@@ -101,6 +113,7 @@ At each round:
 - Getting stuck in local optima
 - Over-exploitation of early good regions
 - Missing better regions due to limited exploration
+- Mistaking a noisy group of points for a meaningful cluster
 
 ---
 
@@ -111,6 +124,7 @@ Transparency in this approach supports:
 - Reproducibility of optimisation decisions
 - Clear understanding of how queries are selected
 - Identification of sampling bias
+- Clear explanation of how clusters, outliers, and noisy regions influence query selection
 
 This improves:
 
