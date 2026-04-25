@@ -149,6 +149,19 @@ The Week 10 update introduces:
 
 This makes the Week 10 search more robust in functions where Week 9 revealed regressions after earlier gains.
 
+**Week 11 – Cluster-Aware Refinement Strategy:**  
+With 20 data points available, the strategy now uses a clustering lens to identify recurring high-performing regions and separate reliable signal from noisy or isolated observations. Instead of treating every strong result equally, the optimiser gives greater weight to groups of nearby strong points because they provide stronger evidence that a meaningful local region has formed.
+
+The Week 11 update introduces:
+
+- **High-Performer Cluster Detection:** Groups nearby strong query points and treats them as promising local search regions.
+- **Centroid-Guided Refinement:** Uses the centre of top-performing neighbourhoods to guide small, controlled movements.
+- **Noise and Outlier Filtering:** Treats isolated strong or weak points cautiously so that one-off results do not dominate the next query.
+- **Boundary Tightening:** Narrows the local search radius around consistent clusters while avoiding repeatedly poor regions.
+- **Cluster-Aware Next Steps:** Selects new queries by balancing local refinement inside promising clusters with limited exploration where the search space remains sparse.
+
+This makes the Week 11 search more evidence-driven by using similarity, distance, and recurring regional behaviour to guide the next optimisation step.
+
 ### Methods and Architecture
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -161,6 +174,7 @@ This makes the Week 10 search more robust in functions where Week 9 revealed reg
 - **Multi-Objective Portfolio Balancing**: Intelligent resource allocation across functions
 - **Emergence Diagnostics**: Regime-shift detection and strategy switching metadata
 - **Scaling-Aware Candidate Search**: Dimension-sensitive uncertainty and hedge-based query generation
+- **Cluster-Aware Refinement**: Uses high-performing neighbourhoods, centroid trends, and outlier filtering to guide Week 11 queries
 
 ---
 
@@ -212,6 +226,7 @@ python scripts/progressive_visualize.py
   - `week8/`: LLM-Aware Optimisation
   - `week9/`: Scaling and Emergence-Aware Optimisation
   - `week10/`: Recovery-Aware Trust-Region Optimisation
+  - `week11/`: Cluster-Aware Refinement Strategy
 - **artifacts/submissions/**: Portal-ready weekly query files
 
 Each week folder contains:
@@ -234,6 +249,8 @@ Each week folder contains:
 
 ### Advanced Optimization Features
 
+- **Week 11 Cluster-Aware Refinement Enhancements**: High-performer cluster detection, centroid-guided refinement, noise filtering, and boundary tightening
+- **Week 10 Recovery-Aware Trust-Region Enhancements**: Drawdown detection, recovery sampling, consensus bonus, and last-point repulsion after collapse
 - **Week 9 Scaling and Emergence-Aware Enhancements**: Emergence scoring, ruggedness penalties, dimension-aware scaling pressure, and hedge-based strategy switching
 - **Week 8 LLM-Aware Optimisation Enhancements**: Instability-aware acquisition, similarity penalties, and boundary control mechanisms reflecting tokenisation effects and prompt sensitivity
 - **Week 6 Sophisticated Parameter Tuning**: Adaptive exploration with convergence analysis
@@ -274,9 +291,9 @@ Each week folder contains:
 
 ---
 
-This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, Week 8 LLM-aware optimisation enhancements, and Week 9 scaling and emergence-aware optimisation updates.
+This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, Week 8 LLM-aware optimisation enhancements, Week 9 scaling and emergence-aware optimisation updates, Week 10 recovery-aware trust-region updates, and Week 11 cluster-aware refinement updates.
 
-The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, attention limitations, scaling pressure, and emergent regime shifts into the optimisation framework.
+The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, attention limitations, scaling pressure, emergent regime shifts, and cluster-based pattern recognition into the optimisation framework.
 
 ## Documentation
 
@@ -287,4 +304,3 @@ The system now captures both classical black-box optimisation behaviour and the 
 
 - **[Technical Architecture](docs/architecture.md)**: Comprehensive system architecture with Mermaid diagrams
 - **[CNN Integration Guide](docs/cnn_integration_guide.md)**: Deep learning enhancement documentation
-- **[Week 6 Advanced Demo](scripts/demo_week6_advanced.py)**: Sophisticated optimization features demonstration

@@ -28,14 +28,14 @@ The dataset enables:
 
 ### Contents
 
-- 10 rounds of queries
+- 11 rounds of queries
 - 8 functions (2D to 8D)
 - 1 query per function per round
 
 ### Size
 
-- 80 query points
-- 80 function evaluations
+- 88 query points
+- 88 function evaluations
 
 ### Format
 
@@ -68,6 +68,7 @@ Queries were generated sequentially using the optimisation pipeline:
 - **Rounds 1–3:** Broad exploration
 - **Rounds 4–7:** Mixed exploration and exploitation
 - **Rounds 8–10:** Refinement and recovery
+- **Round 11:** Cluster-aware refinement
 
 ### Week 10 Strategy
 
@@ -78,9 +79,17 @@ Queries were generated sequentially using the optimisation pipeline:
 - Trust-region refinement
 - Avoidance of recent poor regions
 
+### Week 11 Strategy
+
+- Cluster detection around nearby high-performing query points
+- Centroid-guided local refinement
+- Filtering of isolated outliers and noisy regions
+- Boundary tightening around promising local clusters
+- Reduced attention to repeatedly weak or inconsistent regions
+
 ### Time Frame
 
-- Data collected over 10 sequential rounds
+- Data collected over 11 sequential rounds
 - Each round depends on results from previous rounds
 
 ---

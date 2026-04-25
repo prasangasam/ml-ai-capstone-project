@@ -222,6 +222,12 @@ Added instability-sensitive scoring, boundary penalties, similarity control, and
 **Week 9 – Scaling and Emergence-Aware Optimisation:**  
 Added emergence scoring, ruggedness estimation, dimension-aware scaling pressure, hedge-based candidate generation, and high-dimensional fast GP fallback.
 
+**Week 10 – Recovery-Aware Trust-Region Optimisation:**  
+Added drawdown detection, recovery sampling around historical best points and top-point centroids, trust-region scaling, consensus bonuses, and repulsion from recent failed regions.
+
+**Week 11 – Cluster-Aware Refinement Strategy:**  
+Added cluster-aware query selection that identifies recurring high-performing regions, uses centroid trends for local refinement, filters isolated noisy points, tightens promising boundaries, and keeps limited exploration for sparse regions.
+
 ### Methods and Architecture Integration
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -230,6 +236,7 @@ Added emergence scoring, ruggedness estimation, dimension-aware scaling pressure
 - **Progressive Visualization**: Week-by-week historical analysis system
 - **Automated Data Management**: Robust loading with format auto-detection
 - **Emergence Diagnostics**: Regime-shift and surface-ruggedness detection
+- **Cluster Diagnostics**: High-performing region detection, centroid tracking, and outlier/noise filtering
 
 ## Configuration and Extensibility
 
@@ -238,7 +245,7 @@ The system supports configuration through:
 - **Function-specific parameters**: Exploration/exploitation balance (ξ, β)
 - **Model selection**: Kernel types and hyperparameter bounds
 - **Visualization options**: Chart types and analysis depth
-- **Strategy controls**: Instability thresholds, emergence weights, and scaling-pressure settings
+- **Strategy controls**: Instability thresholds, emergence weights, scaling-pressure settings, cluster radius controls, and refinement bounds
 - **Data format handling**: Input/output format specifications
 
 This architecture enables efficient black-box optimization with comprehensive tracking and analysis capabilities.
