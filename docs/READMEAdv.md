@@ -334,5 +334,5 @@ The system now captures both classical black-box optimisation behaviour and the 
 
 ## Additional Resources
 
-- **[Technical Architecture](docs/architecture.md)**: Comprehensive system architecture with Mermaid diagrams
-- **[CNN Integration Guide](docs/cnn_integration_guide.md)**: Deep learning enhancement documentation
+- **[Technical Architecture](architecture.md)**: Comprehensive system architecture with Mermaid diagrams
+- **[CNN Integration Guide](cnn_integration_guide.md)**: Deep learning enhancement documentation
