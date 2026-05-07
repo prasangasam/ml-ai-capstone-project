@@ -329,10 +329,10 @@ The system now captures both classical black-box optimisation behaviour and the 
 
 ## Documentation
 
-- [Datasheet](docs/datasheet.md)
-- [Model Card](docs/model_card.md)
+- [Datasheet](/docs/datasheet.md)
+- [Model Card](/docs/model_card.md)
 
 ## Additional Resources
 
-- **[Technical Architecture](docs/architecture.md)**: Comprehensive system architecture with Mermaid diagrams
-- **[CNN Integration Guide](docs/cnn_integration_guide.md)**: Deep learning enhancement documentation
+- **[Technical Architecture](/docs/architecture.md)**: Comprehensive system architecture with Mermaid diagrams
+- **[CNN Integration Guide](/docs/cnn_integration_guide.md)**: Deep learning enhancement documentation
