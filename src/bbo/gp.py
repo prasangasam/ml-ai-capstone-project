@@ -95,6 +95,116 @@ def _cluster_candidate_cloud(rng: np.random.Generator, X: np.ndarray, y: np.ndar
     Xcand = np.vstack([centroid_cloud, best_cloud, boundary_cloud, global_cloud])
     return np.clip(Xcand, config.W9_MIN_BOUND, config.W9_MAX_BOUND), summary
 
+
+def _pca_summary(X: np.ndarray, y: np.ndarray) -> dict:
+    X = np.asarray(X, float)
+    y = np.asarray(y, float).reshape(-1)
+    if X.shape[0] < config.W12_PCA_MIN_POINTS or X.shape[1] < 2:
+        return {"enabled": False}
+    n_top = max(3, int(np.ceil(config.W12_PCA_TOP_RATIO * X.shape[0])))
+    top_idx = np.argsort(y)[-n_top:]
+    X_top = X[top_idx]
+    center = np.mean(X_top, axis=0)
+    X_centered = X_top - center
+    try:
+        _, singular_values, vh = np.linalg.svd(X_centered, full_matrices=False)
+    except Exception:
+        return {"enabled": False}
+    variance = singular_values ** 2
+    total = float(np.sum(variance))
+    if total <= 1e-12:
+        return {"enabled": False}
+    ratio = variance / total
+    cumulative = np.cumsum(ratio)
+    n_components = int(np.searchsorted(cumulative, config.W12_PCA_EXPLAINED_VARIANCE_TARGET) + 1)
+    n_components = int(np.clip(n_components, 1, min(config.W12_PCA_MAX_COMPONENTS, X.shape[1], vh.shape[0])))
+    components = vh[:n_components]
+    explained = float(cumulative[n_components - 1])
+    redundancy = float(np.clip(1.0 - n_components / max(X.shape[1], 1), 0.0, 1.0))
+    scale_base = config.W12_PCA_BASE_SCALE_LOW_D if X.shape[1] <= 4 else config.W12_PCA_BASE_SCALE_HIGH_D
+    component_scales = np.sqrt(np.maximum(ratio[:n_components], 1e-8))
+    component_scales = scale_base * component_scales / max(float(component_scales.max()), 1e-8)
+    return {
+        "enabled": True,
+        "center": center,
+        "components": components,
+        "component_scales": component_scales,
+        "n_components": n_components,
+        "explained_variance": explained,
+        "redundancy": redundancy,
+        "best_x": np.asarray(X[int(np.argmax(y))], float),
+    }
+
+
+def _pca_candidate_cloud(rng: np.random.Generator, X: np.ndarray, y: np.ndarray, dim: int, n_candidates: int) -> tuple[np.ndarray, dict]:
+    summary = _pca_summary(X, y)
+    if not summary.get("enabled"):
+        return _cluster_candidate_cloud(rng, X, y, dim, n_candidates, seed=0)
+    n_local = max(1, int(config.W12_PCA_LOCAL_RATIO * n_candidates))
+    n_axis = max(1, int(config.W12_PCA_AXIS_RATIO * n_candidates))
+    n_global = max(1, n_candidates - n_local - n_axis)
+    k = summary["n_components"]
+    comps = summary["components"]
+    scales = summary["component_scales"]
+    center = 0.60 * summary["best_x"] + 0.40 * summary["center"]
+
+    z = rng.normal(size=(n_local, k)) * scales.reshape(1, -1)
+    local = center.reshape(1, -1) + z @ comps
+    orth_noise = rng.normal(scale=(np.mean(scales) * config.W12_PCA_ORTHOGONAL_SHRINK), size=(n_local, dim))
+    local = local + orth_noise
+
+    axes = rng.integers(0, k, size=n_axis)
+    signs = rng.choice([-1.0, 1.0], size=n_axis)
+    steps = rng.normal(loc=1.0, scale=0.45, size=n_axis) * scales[axes] * signs
+    axis_cloud = center.reshape(1, -1) + comps[axes] * steps.reshape(-1, 1)
+
+    global_ = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
+    Xcand = np.vstack([local, axis_cloud, global_])
+    return np.clip(Xcand, config.W9_MIN_BOUND, config.W9_MAX_BOUND), summary
+
+
+def _rl_feedback_summary(y: np.ndarray) -> dict:
+    y = np.asarray(y, float).reshape(-1)
+    if y.size < 3:
+        return {"epsilon": config.W13_EPSILON_BASE, "recent_reward": 0.0, "reward_rate": 0.0, "credit_x_index": int(np.argmax(y))}
+    span = max(float(np.max(y) - np.min(y)), 1e-12)
+    recent = y[-4:] if y.size >= 4 else y
+    deltas = np.diff(recent)
+    recent_reward = float(np.mean(deltas) / span) if deltas.size else 0.0
+    reward_rate = float((float(y[-1]) - float(y[-2])) / span)
+    dd = float(np.clip((float(np.max(y[-5:])) - float(y[-1])) / max(float(np.max(y[-5:]) - np.min(y[-5:])), 1e-12), 0.0, 1.0)) if y.size >= 5 else 0.0
+    epsilon = config.W13_EPSILON_BASE + 0.20 * max(0.0, -recent_reward) + 0.12 * dd
+    epsilon = float(np.clip(epsilon, config.W13_EPSILON_MIN, config.W13_EPSILON_MAX))
+    # Credit assignment proxy: pick the recent point with the highest positive delta.
+    if y.size >= 2:
+        all_deltas = np.diff(y)
+        credit_idx = int(np.argmax(all_deltas) + 1)
+        if float(all_deltas[credit_idx - 1]) <= 0.0:
+            credit_idx = int(np.argmax(y))
+    else:
+        credit_idx = int(np.argmax(y))
+    return {"epsilon": epsilon, "recent_reward": recent_reward, "reward_rate": reward_rate, "credit_x_index": credit_idx}
+
+
+def _rl_feedback_candidate_cloud(rng: np.random.Generator, X: np.ndarray, y: np.ndarray, dim: int, n_candidates: int) -> tuple[np.ndarray, dict]:
+    summary = _rl_feedback_summary(y)
+    best_x = np.asarray(X[int(np.argmax(y))], dtype=float)
+    credit_x = np.asarray(X[int(summary["credit_x_index"])], dtype=float)
+    center_x = _topk_center(X, y, dim)
+    eps = float(summary["epsilon"])
+    n_global = max(1, int(max(config.W13_RL_GLOBAL_RATIO, eps) * n_candidates))
+    n_credit = max(1, int(config.W13_RL_CREDIT_RATIO * n_candidates))
+    n_best = max(1, n_candidates - n_global - n_credit)
+    scale = config.W13_RL_LOCAL_SCALE_LOW_D if dim <= 4 else config.W13_RL_LOCAL_SCALE_HIGH_D
+    if summary["recent_reward"] < 0.0:
+        scale *= 1.25
+    best_anchor = 0.70 * best_x + 0.30 * center_x
+    best_cloud = rng.normal(loc=best_anchor, scale=scale, size=(n_best, dim))
+    credit_cloud = rng.normal(loc=credit_x, scale=scale * 1.15, size=(n_credit, dim))
+    global_cloud = rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_global, dim))
+    Xcand = np.vstack([best_cloud, credit_cloud, global_cloud])
+    return np.clip(Xcand, config.W9_MIN_BOUND, config.W9_MAX_BOUND), {"enabled": True, "rl_feedback": True, **summary, "credit_x": credit_x}
+
 def _trust_region_scale(dim: int, strategy: str, drawdown_ratio: float) -> float:
     base = config.W10_RECOVER_SCALE_LOW_D if dim <= 4 else config.W10_RECOVER_SCALE_HIGH_D
     scale = base * (1.0 - 0.35 * float(np.clip(drawdown_ratio, 0.0, 1.0)))
@@ -152,13 +262,16 @@ def fit_best_gp_by_lml(X: np.ndarray, y: np.ndarray, dim: int, seed: int):
     best_gp: Optional[GaussianProcessRegressor] = None
     best_lml = -np.inf
     details: List[Tuple[str, float]] = []
-    n_restarts = _restarts(dim, len(y))
-    for j, k in enumerate(_kernel_pool(dim)):
+    fast_late_stage = bool(dim >= config.W13_FAST_GP_DIM_THRESHOLD and len(y) >= config.W13_FAST_GP_POINT_THRESHOLD)
+    n_restarts = 0 if fast_late_stage else _restarts(dim, len(y))
+    kernel_pool = _kernel_pool(dim)[:1] if fast_late_stage else _kernel_pool(dim)
+    for j, k in enumerate(kernel_pool):
         gp = GaussianProcessRegressor(
             kernel=k,
             alpha=config.NOISE_ALPHA,
             normalize_y=True,
             n_restarts_optimizer=n_restarts,
+            optimizer=None if fast_late_stage else "fmin_l_bfgs_b",
             random_state=seed + 17 * j,
         )
         gp.fit(X, y)
@@ -185,6 +298,12 @@ def _build_candidates(
     strategy = strategy.lower().strip()
     if strategy == "explore":
         return rng.uniform(config.W9_MIN_BOUND, config.W9_MAX_BOUND, size=(n_candidates, dim)), {"enabled": False}
+
+    if strategy == "pca_variance":
+        return _pca_candidate_cloud(rng, X, y, dim, n_candidates)
+
+    if strategy == "rl_feedback":
+        return _rl_feedback_candidate_cloud(rng, X, y, dim, n_candidates)
 
     if strategy == "cluster":
         return _cluster_candidate_cloud(rng, X, y, dim, n_candidates, seed)
@@ -283,6 +402,7 @@ def propose_next_point(
     ruggedness_score: float = 0.0,
     dimension_scaling_pressure: float = 0.0,
     drawdown_ratio: float = 0.0,
+    recent_trend_score: float = 0.0,
 ):
     rng = np.random.default_rng(seed)
     dim = X.shape[1]
@@ -311,7 +431,7 @@ def propose_next_point(
     rugged_pen = _ruggedness_penalty(Xcand, X, y)
     consensus_bonus = _consensus_bonus(Xcand, X, y)
     last_point_pen = _last_point_repulsion(Xcand, np.asarray(X[-1], float), max(0.0, float(drawdown_ratio) - config.W10_DRAWDOWN_TRIGGER))
-    if cluster_info.get("enabled"):
+    if cluster_info.get("enabled") and "best_cluster" in cluster_info:
         best_cluster = cluster_info["best_cluster"]
         dist_to_cluster = np.sqrt(((Xcand - best_cluster["centroid"]) ** 2).sum(axis=1))
         cluster_scale = max(0.08 * dim, 1e-6)
@@ -323,6 +443,30 @@ def propose_next_point(
     else:
         cluster_quality_bonus = np.zeros(Xcand.shape[0], dtype=float)
         cluster_diversity_bonus = np.zeros(Xcand.shape[0], dtype=float)
+
+    if cluster_info.get("enabled") and "components" in cluster_info:
+        centered = Xcand - cluster_info["center"].reshape(1, -1)
+        projected = centered @ cluster_info["components"].T
+        reconstructed = projected @ cluster_info["components"]
+        residual = np.sqrt(np.sum((centered - reconstructed) ** 2, axis=1))
+        pca_scale = max(float(np.mean(cluster_info["component_scales"])) * dim, 1e-6)
+        pca_variance_bonus = cluster_info["explained_variance"] * np.exp(-residual / pca_scale)
+        pca_redundancy_penalty = cluster_info["redundancy"] * np.clip(residual / pca_scale, 0.0, 1.0)
+    else:
+        pca_variance_bonus = np.zeros(Xcand.shape[0], dtype=float)
+        pca_redundancy_penalty = np.zeros(Xcand.shape[0], dtype=float)
+
+    if cluster_info.get("rl_feedback"):
+        credit_x = np.asarray(cluster_info.get("credit_x"), dtype=float).reshape(1, -1)
+        credit_dist = np.sqrt(((Xcand - credit_x) ** 2).sum(axis=1))
+        credit_scale = max((config.W13_RL_LOCAL_SCALE_LOW_D if dim <= 4 else config.W13_RL_LOCAL_SCALE_HIGH_D) * dim, 1e-6)
+        rl_credit_bonus = np.exp(-credit_dist / credit_scale) * max(0.0, 1.0 + float(cluster_info.get("recent_reward", 0.0)))
+        success_bonus = np.maximum(0.0, mu - np.percentile(mu, 70)) / max(float(np.ptp(mu)), 1e-12)
+        exploration_bonus = sigma / max(float(np.max(sigma)), 1e-12) * float(cluster_info.get("epsilon", config.W13_EPSILON_BASE))
+    else:
+        rl_credit_bonus = np.zeros(Xcand.shape[0], dtype=float)
+        success_bonus = np.zeros(Xcand.shape[0], dtype=float)
+        exploration_bonus = np.zeros(Xcand.shape[0], dtype=float)
     score = (
         raw_score
         + sigma_bonus
@@ -330,6 +474,11 @@ def propose_next_point(
         + config.W10_CONSENSUS_BONUS_WEIGHT * consensus_bonus
         + config.W11_CLUSTER_QUALITY_BONUS_WEIGHT * cluster_quality_bonus
         + config.W11_CLUSTER_DIVERSITY_BONUS_WEIGHT * cluster_diversity_bonus
+        + config.W12_PCA_VARIANCE_BONUS_WEIGHT * pca_variance_bonus
+        + config.W13_RL_CREDIT_BONUS_WEIGHT * rl_credit_bonus
+        + config.W13_RL_RECENT_SUCCESS_WEIGHT * success_bonus
+        + config.W13_RL_EXPLORATION_BONUS_WEIGHT * exploration_bonus
+        - config.W12_PCA_REDUNDANCY_PENALTY_WEIGHT * pca_redundancy_penalty
         - config.W8_BOUNDARY_PENALTY_WEIGHT * boundary_pen
         - config.W8_REPEAT_PENALTY_WEIGHT * repeat_pen
         - config.W9_RUGGEDNESS_PENALTY_WEIGHT * float(ruggedness_score) * rugged_pen
@@ -363,6 +512,18 @@ def propose_next_point(
         "cluster_count": int(cluster_info.get("k", 0) or 0),
         "cluster_quality_bonus_at_choice": float(cluster_quality_bonus[idx]),
         "cluster_diversity_bonus_at_choice": float(cluster_diversity_bonus[idx]),
-        "cluster_target_label": int(cluster_info.get("best_cluster", {}).get("label", -1)) if cluster_info.get("enabled") else -1,
+        "cluster_target_label": int(cluster_info.get("best_cluster", {}).get("label", -1)) if cluster_info.get("enabled") and "best_cluster" in cluster_info else -1,
+        "pca_components": int(cluster_info.get("n_components", 0) or 0),
+        "pca_explained_variance": float(cluster_info.get("explained_variance", 0.0) or 0.0),
+        "pca_redundancy": float(cluster_info.get("redundancy", 0.0) or 0.0),
+        "pca_variance_bonus_at_choice": float(pca_variance_bonus[idx]),
+        "pca_redundancy_penalty_at_choice": float(pca_redundancy_penalty[idx]),
+        "rl_feedback_enabled": bool(cluster_info.get("rl_feedback", False)),
+        "rl_epsilon": float(cluster_info.get("epsilon", 0.0) or 0.0),
+        "rl_recent_reward": float(cluster_info.get("recent_reward", 0.0) or 0.0),
+        "rl_reward_rate": float(cluster_info.get("reward_rate", 0.0) or 0.0),
+        "rl_credit_bonus_at_choice": float(rl_credit_bonus[idx]),
+        "rl_recent_success_bonus_at_choice": float(success_bonus[idx]),
+        "rl_exploration_bonus_at_choice": float(exploration_bonus[idx]),
         "fast_gp_mode": bool(dim >= config.W9_FAST_GP_DIM_THRESHOLD and len(y) >= config.W9_FAST_GP_POINT_THRESHOLD),
     }
