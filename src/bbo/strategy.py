@@ -105,6 +105,58 @@ def dimension_scaling_pressure(dim: int, n_observations: int) -> float:
     return float(base)
 
 
+
+def pca_variance_structure(X: np.ndarray, y: np.ndarray, *, top_ratio: float = config.W12_PCA_TOP_RATIO) -> Dict[str, float]:
+    X = np.asarray(X, float)
+    y = np.asarray(y, float).reshape(-1)
+    if X.ndim != 2 or X.shape[0] < config.W12_PCA_MIN_POINTS or X.shape[1] < 2:
+        return {"enabled": 0.0, "n_components": 0.0, "explained_variance": 0.0, "redundancy": 0.0}
+    n_top = max(3, int(np.ceil(top_ratio * X.shape[0])))
+    top_idx = np.argsort(y)[-n_top:]
+    X_top = X[top_idx]
+    X_centered = X_top - np.mean(X_top, axis=0, keepdims=True)
+    _, singular_values, _ = np.linalg.svd(X_centered, full_matrices=False)
+    variance = singular_values ** 2
+    total = float(np.sum(variance))
+    if total <= 1e-12:
+        return {"enabled": 0.0, "n_components": 0.0, "explained_variance": 0.0, "redundancy": 1.0}
+    ratio = variance / total
+    cumulative = np.cumsum(ratio)
+    n_components = int(np.searchsorted(cumulative, config.W12_PCA_EXPLAINED_VARIANCE_TARGET) + 1)
+    n_components = int(np.clip(n_components, 1, min(config.W12_PCA_MAX_COMPONENTS, X.shape[1])))
+    explained = float(cumulative[n_components - 1])
+    redundancy = float(np.clip(1.0 - (n_components / max(X.shape[1], 1)), 0.0, 1.0))
+    return {
+        "enabled": 1.0,
+        "n_components": float(n_components),
+        "explained_variance": explained,
+        "redundancy": redundancy,
+    }
+
+
+def rl_reward_signal(y_hist: np.ndarray, window: int = 4) -> Dict[str, float]:
+    """Convert sequential feedback into an RL-style reward summary.
+
+    Positive recent deltas indicate that the current policy is being rewarded;
+    drawdowns or flat rewards increase the need for exploration.
+    """
+    y_hist = np.asarray(y_hist, float).reshape(-1)
+    if y_hist.size < 3:
+        return {"recent_reward": 0.0, "reward_rate": 0.0, "epsilon": config.W13_EPSILON_BASE}
+    recent = y_hist[-window:] if y_hist.size >= window else y_hist
+    deltas = np.diff(recent)
+    span = max(float(np.max(y_hist) - np.min(y_hist)), 1e-12)
+    recent_reward = float(np.mean(deltas) / span) if deltas.size else 0.0
+    reward_rate = float((float(y_hist[-1]) - float(y_hist[-2])) / span)
+    instability = recent_instability(y_hist)
+    drawdown = drawdown_ratio(y_hist)
+    epsilon = config.W13_EPSILON_BASE
+    epsilon += 0.20 * max(0.0, -recent_reward)
+    epsilon += 0.18 * instability
+    epsilon += 0.12 * drawdown
+    epsilon = float(np.clip(epsilon, config.W13_EPSILON_MIN, config.W13_EPSILON_MAX))
+    return {"recent_reward": recent_reward, "reward_rate": reward_rate, "epsilon": epsilon}
+
 def choose_strategy(week: int, y_hist: np.ndarray, *, dim: Optional[int] = None) -> str:
     instability = recent_instability(y_hist)
     emergence = emergence_score(y_hist)
@@ -112,6 +164,7 @@ def choose_strategy(week: int, y_hist: np.ndarray, *, dim: Optional[int] = None)
     trend = recent_trend_score(y_hist)
     n_obs = len(np.asarray(y_hist).reshape(-1))
     scaling_pressure = dimension_scaling_pressure(dim or 0, n_obs)
+    pca_info = {"enabled": 0.0, "explained_variance": 0.0, "redundancy": 0.0}
 
     if week <= 2:
         return "explore"
@@ -126,6 +179,10 @@ def choose_strategy(week: int, y_hist: np.ndarray, *, dim: Optional[int] = None)
         return "recover"
     if instability >= config.W8_INSTABILITY_THRESHOLD or scaling_pressure > 0.18:
         return "hedge"
+    if n_obs >= config.W13_RL_MIN_POINTS:
+        return "rl_feedback"
+    if n_obs >= config.W12_PCA_MIN_POINTS and (dim or 0) >= 3:
+        return "pca_variance"
     if n_obs >= config.W11_CLUSTER_MIN_POINTS:
         return "cluster"
     if n_obs >= config.LATE_STAGE_MIN_POINTS and abs(emergence) >= config.W9_EMERGENCE_Z_THRESHOLD:
@@ -150,6 +207,10 @@ def choose_acquisition(
         return "ucb"
     if abs(emergence) >= config.W9_EMERGENCE_Z_THRESHOLD and strategy == "hedge":
         return "ucb"
+    if strategy and strategy.lower().strip() == "pca_variance":
+        return "ei"
+    if strategy and strategy.lower().strip() == "rl_feedback":
+        return "ucb" if (instability >= 0.12 or abs(emergence) >= config.W9_EMERGENCE_Z_THRESHOLD) else "ei"
     if strategy and strategy.lower().strip() == "refine":
         return "ei"
     if strategy and strategy.lower().strip() == "hedge":
@@ -171,7 +232,9 @@ def adaptive_exploration_params(week: int, y_hist: np.ndarray, func_idx: int, di
     drawdown = drawdown_ratio(y_hist)
     trend = recent_trend_score(y_hist)
 
-    late_stage_multiplier = 0.65 if len(np.asarray(y_hist).reshape(-1)) >= config.LATE_STAGE_MIN_POINTS else 1.0
+    n_hist = len(np.asarray(y_hist).reshape(-1))
+    rl_signal = rl_reward_signal(y_hist)
+    late_stage_multiplier = 0.50 if n_hist >= config.W13_RL_MIN_POINTS else (0.55 if n_hist >= config.W12_PCA_MIN_POINTS else (0.65 if n_hist >= config.LATE_STAGE_MIN_POINTS else 1.0))
     base_exploration = config.XI_EXPLORE * (config.ADAPTIVE_EXPLORATION_RATE ** week) * late_stage_multiplier
     func_weight = config.MULTI_OBJECTIVE_WEIGHTS[func_idx] if func_idx < len(config.MULTI_OBJECTIVE_WEIGHTS) else 1.0
 
@@ -185,6 +248,10 @@ def adaptive_exploration_params(week: int, y_hist: np.ndarray, func_idx: int, di
         xi_adaptive = base_exploration * 1.2 * uncertainty_factor
         beta_adaptive = config.BETA_EXPLORE * func_weight * max(1.0, uncertainty_factor)
         mode = "adaptive_recover"
+    elif n_hist >= config.W13_RL_MIN_POINTS:
+        xi_adaptive = config.XI_EXPLOIT + base_exploration * (0.5 + rl_signal["epsilon"]) * uncertainty_factor
+        beta_adaptive = config.BETA_EXPLOIT * func_weight * max(1.0, 1.0 + rl_signal["epsilon"] + instability + scaling_pressure)
+        mode = "rl_feedback_adaptive"
     elif convergence_info["improvement_trend"] < config.MIN_IMPROVEMENT_THRESHOLD:
         xi_adaptive = base_exploration * 1.5 * uncertainty_factor
         beta_adaptive = config.BETA_EXPLORE * func_weight * uncertainty_factor
@@ -210,6 +277,9 @@ def adaptive_exploration_params(week: int, y_hist: np.ndarray, func_idx: int, di
         "dimension_scaling_pressure": float(scaling_pressure),
         "drawdown_ratio": float(drawdown),
         "recent_trend_score": float(trend),
+        "rl_recent_reward": float(rl_signal["recent_reward"]),
+        "rl_reward_rate": float(rl_signal["reward_rate"]),
+        "rl_epsilon": float(rl_signal["epsilon"]),
     }
 
 
