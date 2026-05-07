@@ -1,12 +1,4 @@
 numpy
-scipy
-scikit-learn
+pandas
 matplotlib
-
-# Optional dependencies for CNN-enhanced optimization
-# Uncomment and install for deep learning surrogate models:
-# torch>=1.9.0
-# torchvision>=0.10.0
-
-# Additional optional dependencies for enhanced features:
-# scipy  # Already included above for interpolation and optimization
+jupyter
