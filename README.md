@@ -97,6 +97,8 @@ ml-ai-capstone-project/
 └── README.md
 ```
 
-## Technical Documentation
+## Documentation
 
-- [Detailed technical details](docs/readmeadv.md)
+- [Datasheet](docs/datasheet.md)
+- [Model Card](docs/model_card.md)
+- [Technical details](docs/READMEAdv.md)
