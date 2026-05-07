@@ -162,6 +162,32 @@ The Week 11 update introduces:
 
 This makes the Week 11 search more evidence-driven by using similarity, distance, and recurring regional behaviour to guide the next optimisation step.
 
+**Week 12 – PCA-Inspired Variance-Aware Refinement:**  
+With 21 data points available before the next query, the strategy now treats the optimisation process as a structure-learning task. Similar to PCA, the optimiser identifies which dimensions and directions appear to explain the most variation in performance, then focuses query generation along those high-information directions while reducing unnecessary movement in lower-impact dimensions.
+
+The Week 12 update introduces:
+
+- **Variance-Aware Direction Selection:** Estimates dominant directions in the best observed regions, analogous to principal components.
+- **Implicit Dimensionality Reduction:** Reduces perturbation in dimensions that appear redundant or weakly related to improvement.
+- **Controlled Exploration:** Keeps a small amount of global and off-axis exploration to avoid over-committing to a local optimum.
+- **PCA-Like Interpretation:** Uses variance, redundancy, and information retention as a conceptual lens for understanding optimisation outcomes.
+- **More Efficient Query Use:** Shifts from broad randomness toward targeted refinement guided by learned structure.
+
+This makes the Week 12 search more mature and interpretable: it balances simplification with information retention, just as PCA reduces dimensionality while preserving the strongest sources of variation.
+
+**Week 13 – RL Feedback-Adaptive Query Strategy:**  
+With the latest weekly results added, the strategy now explicitly frames each query as an RL-style action and each observed week-to-week change as a reward signal. The optimiser uses feedback to decide whether to exploit historically strong regions, recover from negative reward, or increase exploration when progress stalls.
+
+The Week 13 update introduces:
+
+- **Reward-Signal Tracking:** Converts recent output changes into a normalised reward proxy for each function.
+- **Epsilon-Style Exploration Control:** Increases exploration when recent rewards are weak, unstable, or declining, and decreases it when feedback supports exploitation.
+- **Credit-Assignment Proxy:** Gives additional attention to query points that produced the strongest recent improvement, similar to assigning value to successful actions.
+- **Policy-Update Logic:** Uses feedback diagnostics to adapt acquisition parameters, trust-region size, and candidate mix.
+- **Practical Runtime Optimisation:** Adds a late-stage fast GP path for higher-dimensional functions so the final query round remains reproducible and efficient.
+
+This makes the Week 13 search directly aligned with reinforcement-learning principles: exploration and exploitation are adjusted using observed rewards rather than fixed heuristics.
+
 ### Methods and Architecture
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -175,6 +201,8 @@ This makes the Week 11 search more evidence-driven by using similarity, distance
 - **Emergence Diagnostics**: Regime-shift detection and strategy switching metadata
 - **Scaling-Aware Candidate Search**: Dimension-sensitive uncertainty and hedge-based query generation
 - **Cluster-Aware Refinement**: Uses high-performing neighbourhoods, centroid trends, and outlier filtering to guide Week 11 queries
+- **PCA-Inspired Variance-Aware Refinement**: Uses dominant performance-variation directions, redundancy reduction, and controlled perturbations to guide Week 12 queries
+- **RL Feedback-Adaptive Query Strategy**: Uses recent reward signals, epsilon-style exploration control, and credit-assignment proxies to guide Week 13 queries
 
 ---
 
@@ -227,6 +255,8 @@ python scripts/progressive_visualize.py
   - `week9/`: Scaling and Emergence-Aware Optimisation
   - `week10/`: Recovery-Aware Trust-Region Optimisation
   - `week11/`: Cluster-Aware Refinement Strategy
+  - `week12/`: PCA-Inspired Variance-Aware Refinement
+  - `week13/`: RL Feedback-Adaptive Query Strategy
 - **artifacts/submissions/**: Portal-ready weekly query files
 
 Each week folder contains:
@@ -249,6 +279,8 @@ Each week folder contains:
 
 ### Advanced Optimization Features
 
+- **Week 12 PCA-Inspired Variance-Aware Enhancements**: Dominant-direction estimation, variance-aware candidate scoring, redundancy penalties, and implicit dimensionality reduction
+- **Week 13 RL Feedback-Adaptive Enhancements**: Reward tracking, epsilon-style exploration adjustment, credit-assignment bonuses, and fast late-stage GP evaluation
 - **Week 11 Cluster-Aware Refinement Enhancements**: High-performer cluster detection, centroid-guided refinement, noise filtering, and boundary tightening
 - **Week 10 Recovery-Aware Trust-Region Enhancements**: Drawdown detection, recovery sampling, consensus bonus, and last-point repulsion after collapse
 - **Week 9 Scaling and Emergence-Aware Enhancements**: Emergence scoring, ruggedness penalties, dimension-aware scaling pressure, and hedge-based strategy switching
@@ -291,9 +323,9 @@ Each week folder contains:
 
 ---
 
-This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, Week 8 LLM-aware optimisation enhancements, Week 9 scaling and emergence-aware optimisation updates, Week 10 recovery-aware trust-region updates, and Week 11 cluster-aware refinement updates.
+This README reflects the complete BBO optimization system with enhanced visualization capabilities, robust data management, Week 6 advanced optimization features, Week 7 hybrid switching optimization, Week 8 LLM-aware optimisation enhancements, Week 9 scaling and emergence-aware optimisation updates, Week 10 recovery-aware trust-region updates, Week 11 cluster-aware refinement updates, Week 12 PCA-inspired variance-aware refinement updates, and Week 13 RL feedback-adaptive updates.
 
-The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, attention limitations, scaling pressure, emergent regime shifts, and cluster-based pattern recognition into the optimisation framework.
+The system now captures both classical black-box optimisation behaviour and the non-smooth, uncertain characteristics of LLM-driven systems, incorporating tokenisation effects, prompt sensitivity, attention limitations, scaling pressure, emergent regime shifts, and cluster-based pattern recognition, variance-aware structure learning, PCA-style dimensionality reduction, and RL-style reward feedback into the optimisation framework.
 
 ## Documentation
 

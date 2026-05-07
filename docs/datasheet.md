@@ -28,14 +28,14 @@ The dataset enables:
 
 ### Contents
 
-- 11 rounds of queries
+- 12 rounds of queries
 - 8 functions (2D to 8D)
 - 1 query per function per round
 
 ### Size
 
-- 88 query points
-- 88 function evaluations
+- 96 query points
+- 96 function evaluations
 
 ### Format
 
@@ -69,6 +69,7 @@ Queries were generated sequentially using the optimisation pipeline:
 - **Rounds 4–7:** Mixed exploration and exploitation
 - **Rounds 8–10:** Refinement and recovery
 - **Round 11:** Cluster-aware refinement
+- **Round 12:** PCA-inspired variance-aware refinement
 
 ### Week 10 Strategy
 
@@ -87,9 +88,31 @@ Queries were generated sequentially using the optimisation pipeline:
 - Boundary tightening around promising local clusters
 - Reduced attention to repeatedly weak or inconsistent regions
 
+### Week 12 Strategy (PCA-Informed Refinement)
+
+- Uses 21 accumulated data points per function to identify dominant sources of variation
+- Treats high-impact directions as PCA-like principal components of the optimisation landscape
+- Reduces movement in low-impact or redundant dimensions to simplify the search
+- Applies controlled perturbations around high-performing clusters rather than broad random sampling
+- Balances exploitation of promising regions with limited exploration to avoid local optima
+- Interprets optimisation outcomes through variance, redundancy, and dimensionality-reduction concepts
+
+This stage marks a shift from heuristic search to structure-driven optimisation: the model now uses learned variation patterns to decide where each new query is most informative.
+
+### Week 13 Strategy (RL Feedback-Adaptive Refinement)
+
+- Uses 22 accumulated data points per function after the latest weekly feedback
+- Treats each submitted query as an action and each output change as a reward signal
+- Applies epsilon-style exploration: more exploration after weak, unstable, or negative feedback, and more exploitation after reliable improvement
+- Uses a credit-assignment proxy to revisit regions linked to the strongest recent improvement
+- Keeps global probes to avoid premature convergence while refining around historically rewarded regions
+- Records RL diagnostics such as recent reward, reward rate, and effective epsilon
+
+This stage connects the optimisation process to reinforcement learning: the strategy is updated by feedback, not only by static surrogate-model predictions.
+
 ### Time Frame
 
-- Data collected over 11 sequential rounds
+- Data collected over 13 sequential rounds
 - Each round depends on results from previous rounds
 
 ---

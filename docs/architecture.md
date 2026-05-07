@@ -59,8 +59,9 @@ flowchart TD
 
     subgraph "Strategy Analysis"
         I --> J[Instability, Emergence,<br/>Ruggedness Scoring]
-        J --> K[Exploration vs<br/>Exploitation Balance]
-        K --> L[Hedge / BO / Refine<br/>Strategy Selection]
+        J --> J2[PCA-Inspired<br/>Variance Analysis]
+        J2 --> K[Exploration vs<br/>Exploitation Balance]
+        K --> L[Hedge / BO / Refine / PCA<br/>Strategy Selection]
     end
 
     subgraph "Output Generation"
@@ -228,6 +229,12 @@ Added drawdown detection, recovery sampling around historical best points and to
 **Week 11 – Cluster-Aware Refinement Strategy:**  
 Added cluster-aware query selection that identifies recurring high-performing regions, uses centroid trends for local refinement, filters isolated noisy points, tightens promising boundaries, and keeps limited exploration for sparse regions.
 
+**Week 12 – PCA-Inspired Variance-Aware Refinement:**  
+Added variance-aware query selection that identifies dominant performance directions, reduces unnecessary perturbation in redundant dimensions, and balances PCA-style simplification with controlled exploration.
+
+**Week 13 – RL Feedback-Adaptive Query Strategy:**  
+Added reward-signal tracking, epsilon-style exploration control, credit-assignment bonuses, and feedback-driven policy updates for the final query round.
+
 ### Methods and Architecture Integration
 
 - **Gaussian Process Regression**: RBF and Matérn kernels with automatic selection
@@ -237,6 +244,8 @@ Added cluster-aware query selection that identifies recurring high-performing re
 - **Automated Data Management**: Robust loading with format auto-detection
 - **Emergence Diagnostics**: Regime-shift and surface-ruggedness detection
 - **Cluster Diagnostics**: High-performing region detection, centroid tracking, and outlier/noise filtering
+- **PCA-Inspired Variance Diagnostics**: Dominant-direction estimation, explained-variance tracking, redundancy scoring, and dimensionality-reduction guidance
+- **RL Feedback Diagnostics**: Recent reward tracking, epsilon control, credit assignment, and policy-update metadata
 
 ## Configuration and Extensibility
 
@@ -245,7 +254,7 @@ The system supports configuration through:
 - **Function-specific parameters**: Exploration/exploitation balance (ξ, β)
 - **Model selection**: Kernel types and hyperparameter bounds
 - **Visualization options**: Chart types and analysis depth
-- **Strategy controls**: Instability thresholds, emergence weights, scaling-pressure settings, cluster radius controls, and refinement bounds
+- **Strategy controls**: Instability thresholds, emergence weights, scaling-pressure settings, cluster radius controls, PCA variance thresholds, redundancy penalties, RL reward/epsilon controls, credit-assignment weights, fast GP thresholds, and refinement bounds
 - **Data format handling**: Input/output format specifications
 
 This architecture enables efficient black-box optimization with comprehensive tracking and analysis capabilities.
