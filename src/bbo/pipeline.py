@@ -176,6 +176,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                     ruggedness_score=ruggedness,
                     dimension_scaling_pressure=scale_pressure,
                     drawdown_ratio=drawdown,
+                    recent_trend_score=trend_score,
                 )
                 report["method_used"] = "gp_fallback"
                 report["cnn_error"] = str(e)
@@ -195,6 +196,7 @@ def run(*, initial_dir: Path, weekly_dir: Path, use_cnn: bool = False, force_cnn
                 ruggedness_score=ruggedness,
                 dimension_scaling_pressure=scale_pressure,
                 drawdown_ratio=drawdown,
+                recent_trend_score=trend_score,
             )
             report["method_used"] = "gp"
             report["method_reason"] = method_reason
